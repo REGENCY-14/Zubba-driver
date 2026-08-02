@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Zubba Driver",
+    "slug": "zubba-driver",
+    "scheme": "com.zubba.driver",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zubbadevs.zubbadriver"
+    },
+    "android": {
+      "package": "com.zubba.driver"
+    },
+    "web": {},
+    "plugins": [
+      "expo-font",
+      "expo-splash-screen",
+      "expo-status-bar"
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+node_modules
+.expo
+.expo-shared
+dist
+coverage
+*.log
+.DS_Store
+android
+ios
+web-build
+.env
+credentials.json
