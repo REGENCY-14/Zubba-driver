@@ -9,16 +9,31 @@ import { Button } from '../../components/common/Button';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
-import { getEarningsBreakdown, EarningsPeriod, Job } from '../../services/mock/jobsMock';
-import { getWalletBalance, WalletBalance } from '../../services/mock/walletMock';
+import { driverService } from '../../api/driverService';
+import { walletService } from '../../api/walletService';
+import { toJob, Job } from '../../utils/jobMapping';
+import { handleApiError } from '../../utils/handleApiError';
 import { toggleSidebar } from '../../slices/ui/uiSlice';
 import type { RootStackScreenProps } from '../../navigation/types';
+
+type EarningsPeriod = 'today' | 'week' | 'month';
+interface WalletBalance {
+  availableGHS: number;
+}
 
 const PERIODS: { key: EarningsPeriod; label: string }[] = [
   { key: 'today', label: 'Today' },
   { key: 'week', label: 'Week' },
   { key: 'month', label: 'Month' },
 ];
+
+function isWithinPeriod(dateIso: string, period: EarningsPeriod): boolean {
+  const date = new Date(dateIso);
+  const now = new Date();
+  if (period === 'today') return date.toDateString() === now.toDateString();
+  const diffDays = (now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000);
+  return period === 'week' ? diffDays >= 0 && diffDays <= 7 : diffDays >= 0 && diffDays <= 30;
+}
 
 export function EarningsScreen({ navigation }: RootStackScreenProps<'Earnings'>) {
   const { colors } = useTheme();
@@ -30,9 +45,17 @@ export function EarningsScreen({ navigation }: RootStackScreenProps<'Earnings'>)
 
   const load = useCallback(async (p: EarningsPeriod) => {
     setLoading(true);
-    const data = await getEarningsBreakdown(p);
-    setJobs(data);
-    setLoading(false);
+    try {
+      const res = await driverService.getMyRequests({ status: 'completed', limit: 200 });
+      const completed = res.data.items
+        .map(toJob)
+        .filter((job) => job.completedAt && isWithinPeriod(job.completedAt, p));
+      setJobs(completed);
+    } catch (err) {
+      handleApiError(err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -40,7 +63,10 @@ export function EarningsScreen({ navigation }: RootStackScreenProps<'Earnings'>)
   }, [period, load]);
 
   useEffect(() => {
-    getWalletBalance().then(setBalance);
+    walletService
+      .getWallet()
+      .then((res) => setBalance({ availableGHS: res.data.wallet.available_balance }))
+      .catch(() => {});
   }, []);
 
   const totalGHS = jobs.reduce((sum, j) => sum + (j.amountEarned ?? 0), 0);

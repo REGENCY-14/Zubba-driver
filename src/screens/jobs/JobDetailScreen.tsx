@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ScrollView, Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
@@ -9,13 +9,17 @@ import { MockMapView } from '../../components/common/MockMapView';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
-import { getJobById, updateJobStatus, Job, JobStatus } from '../../services/mock/jobsMock';
+import { driverService } from '../../api/driverService';
+import { toJob, Job, JobStatus } from '../../utils/jobMapping';
+import { callCustomer, messageCustomer } from '../../utils/contactCustomer';
+import { handleApiError } from '../../utils/handleApiError';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 const STATUS_LABEL: Record<JobStatus, string> = {
+  paid: 'Paid',
+  accepted: 'Accepted',
   en_route: 'En route',
   arrived: 'Arrived',
-  scheduled: 'Scheduled',
   completed: 'Completed',
   cancelled: 'Cancelled',
 };
@@ -32,20 +36,35 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    getJobById(jobId).then(j => setJob(j ?? null));
+  const load = useCallback(async () => {
+    try {
+      const res = await driverService.getRequestById(jobId);
+      setJob(toJob(res.data));
+    } catch (err) {
+      handleApiError(err);
+    }
   }, [jobId]);
 
-  const handleArrived = async () => {
-    if (!job) return;
-    setLoading(true);
-    await updateJobStatus(job.id, 'arrived');
-    setLoading(false);
-    setJob({ ...job, status: 'arrived' });
-  };
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const handleUnavailableAction = (action: string) => {
-    Alert.alert('Not available in this preview', `${action} isn't wired up in this UI-only build.`);
+  // Backend only allows single-step transitions (paid -> accepted -> en_route ->
+  // arrived), so the next status is always derived from the current one rather
+  // than requested directly.
+  const advanceStatus = async () => {
+    if (!job) return;
+    const nextStatus =
+      job.status === 'paid' ? 'accepted' : job.status === 'accepted' ? 'en_route' : 'arrived';
+    setLoading(true);
+    try {
+      const res = await driverService.updateRequestStatus(job.id, nextStatus);
+      setJob(toJob(res.data.request));
+    } catch (err) {
+      handleApiError(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!job) {
@@ -109,7 +128,7 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
             label="Call"
             variant="secondary"
             leftIcon={<MaterialCommunityIcons name="phone-outline" size={moderateScale(16)} color={colors.text} />}
-            onPress={() => handleUnavailableAction('Calling')}
+            onPress={() => callCustomer(job.customerPhone)}
           />
         </View>
         <View style={{ flex: 1 }}>
@@ -117,12 +136,22 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
             label="Message"
             variant="secondary"
             leftIcon={<MaterialCommunityIcons name="message-outline" size={moderateScale(16)} color={colors.text} />}
-            onPress={() => handleUnavailableAction('Messaging')}
+            onPress={() => messageCustomer(job.customerPhone)}
           />
         </View>
       </View>
 
-      {job.status === 'en_route' && <Button label="Arrived" size="lg" onPress={handleArrived} loading={loading} />}
+      {job.status === 'paid' && (
+        <Button label="Accept job" size="lg" onPress={advanceStatus} loading={loading} />
+      )}
+
+      {job.status === 'accepted' && (
+        <Button label="Start trip" size="lg" onPress={advanceStatus} loading={loading} />
+      )}
+
+      {job.status === 'en_route' && (
+        <Button label="Arrived" size="lg" onPress={advanceStatus} loading={loading} />
+      )}
 
       {job.status === 'arrived' && (
         <Button
@@ -130,15 +159,6 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
           size="lg"
           onPress={() => navigation.navigate('CollectionCode', { jobId: job.id })}
         />
-      )}
-
-      {job.status === 'scheduled' && job.scheduledFor && (
-        <Card>
-          <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(13), color: colors.textSub }}>
-            Scheduled for{' '}
-            {new Date(job.scheduledFor).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
-          </Text>
-        </Card>
       )}
       </ScrollView>
     </View>

@@ -6,6 +6,7 @@ import "react-native-gesture-handler";
 import { useEffect } from "react";
 import { Text, TextInput, StatusBar } from "react-native";
 import { Provider } from "react-redux";
+import { Toaster } from "sonner-native";
 import { NavigationContainer, useNavigationContainerRef } from "@react-navigation/native";
 import {
   useFonts,
@@ -21,8 +22,8 @@ import { store } from "./src/store";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { AppSidebar } from "./src/components/AppSidebar";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
-import { hydrateAuth } from "./src/slices/auth/hydrateAuth";
 import { hydrateDriverProfile } from "./src/slices/driverProfile/hydrateDriverProfile";
+import { configureNotifications } from "./src/services/pushNotifications";
 import type { RootStackParamList } from "./src/navigation/types";
 
 // Apply Poppins as the global default for unstyled Text / TextInput
@@ -48,6 +49,7 @@ function AppContent() {
         />
         <RootNavigator />
         <AppSidebar navigationRef={navigationRef} />
+        <Toaster />
       </NavigationContainer>
     </Provider>
   );
@@ -63,8 +65,8 @@ export default function App() {
   });
 
   useEffect(() => {
-    hydrateAuth();
     hydrateDriverProfile();
+    configureNotifications();
   }, []);
 
   useEffect(() => {

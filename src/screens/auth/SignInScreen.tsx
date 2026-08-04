@@ -5,7 +5,8 @@ import { Button } from '../../components/common/Button';
 import { FormField } from '../../components/common/FormField';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
-import { requestOtp } from '../../services/mock/authMock';
+import { authService } from '../../api/authService';
+import { handleApiError } from '../../utils/handleApiError';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
@@ -17,9 +18,19 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
 
   const handleContinue = async () => {
     setLoading(true);
-    await requestOtp(phone.trim());
-    setLoading(false);
-    navigation.navigate('VerifyOtp', { phone: phone.trim(), purpose: 'login' });
+    try {
+      await authService.register({
+        authKey: 'phone',
+        authValue: phone.trim(),
+        role: 'driver',
+        find: true,
+      });
+      navigation.navigate('VerifyOtp', { phone: phone.trim(), purpose: 'login' });
+    } catch (err) {
+      handleApiError(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

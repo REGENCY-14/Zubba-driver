@@ -9,6 +9,10 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
 import { updateUser } from '../../slices/auth/authSlice';
 import { saveAuthUser } from '../../utils/authStorage';
+import { userService } from '../../api/userService';
+import { driverService } from '../../api/driverService';
+import { uploadKycDocument } from '../../services/kycUploadService';
+import { handleApiError } from '../../utils/handleApiError';
 import type { RootState } from '../../store';
 import type { RootStackScreenProps } from '../../navigation/types';
 
@@ -25,11 +29,25 @@ export function ProfileScreen({ navigation }: RootStackScreenProps<'Profile'>) {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const updated = { firstname, lastname, profile_picture: profilePhoto };
-    dispatch(updateUser(updated));
-    await saveAuthUser({ ...user, ...updated });
-    setSaving(false);
-    navigation.goBack();
+    try {
+      const isNewLocalPhoto = profilePhoto && profilePhoto !== user.profile_picture && !profilePhoto.startsWith('http');
+      const uploadedPhoto = isNewLocalPhoto ? await uploadKycDocument(user.id, 'profile', profilePhoto!) : profilePhoto;
+
+      const res = await userService.updateUser(user.id, {
+        firstname,
+        lastname,
+        profile_picture: uploadedPhoto,
+      });
+      await driverService.updateMe({ profile_picture: uploadedPhoto }).catch(() => {});
+
+      dispatch(updateUser(res.data.user));
+      await saveAuthUser({ ...user, ...res.data.user });
+      navigation.goBack();
+    } catch (err) {
+      handleApiError(err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

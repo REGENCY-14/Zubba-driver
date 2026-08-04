@@ -1,5 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { RootStackParamList } from './types';
+import { SplashScreen } from '../screens/onboarding/SplashScreen';
+import { OnboardLocationAccessScreen } from '../screens/onboarding/OnboardLocationAccessScreen';
+import { OnboardNotificationsAccessScreen } from '../screens/onboarding/OnboardNotificationsAccessScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { SignUpScreen } from '../screens/auth/SignUpScreen';
 import { SignInScreen } from '../screens/auth/SignInScreen';
@@ -30,7 +33,10 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   return (
-    <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
+    <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Splash" component={SplashScreen} />
+      <Stack.Screen name="OnboardLocationAccess" component={OnboardLocationAccessScreen} />
+      <Stack.Screen name="OnboardNotificationsAccess" component={OnboardNotificationsAccessScreen} />
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen name="SignIn" component={SignInScreen} />

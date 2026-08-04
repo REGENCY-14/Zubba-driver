@@ -1,9 +1,9 @@
 import { Text, View } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { COLORS } from '../../constants/colors';
 import { moderateScale } from '../../utils/scale';
-import type { PayoutRail } from '../../services/mock/walletMock';
+
+export type PayoutRail = 'mtn' | 'telecel' | 'airtel';
 
 interface PaymentRailBadgeProps {
   rail: PayoutRail;
@@ -50,22 +50,11 @@ export function PaymentRailBadge({ rail }: PaymentRailBadgeProps) {
     );
   }
 
-  if (rail === 'airtel') {
-    return (
-      <View style={[baseStyle, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }]}>
-        <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(24), color: COLORS.paymentRail.airtelGlyph }}>
-          t
-        </Text>
-      </View>
-    );
-  }
-
-  // Bank — no dedicated brand color exists for this in the customer app (it only
-  // has MTN/Telecel/Airtel rails); reuses the same neutral bordered treatment as
-  // Airtel rather than inventing a new color.
   return (
     <View style={[baseStyle, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }]}>
-      <MaterialCommunityIcons name="bank-outline" size={moderateScale(22)} color={colors.text} />
+      <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(24), color: COLORS.paymentRail.airtelGlyph }}>
+        t
+      </Text>
     </View>
   );
 }

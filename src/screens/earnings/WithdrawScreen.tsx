@@ -8,18 +8,20 @@ import { PaymentRailBadge } from '../../components/common/PaymentRailBadge';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
-import { getWalletBalance, submitWithdrawal, PayoutRail } from '../../services/mock/walletMock';
+import { walletService } from '../../api/walletService';
 import type { RootStackScreenProps } from '../../navigation/types';
 
+type PayoutRail = 'mtn' | 'telecel' | 'airtel';
+
+// 'bank' has no backend support today — /wallet/withdraw only accepts
+// mobile-money providers (mtn/telecel/airtel), so it's left out here rather
+// than offered and silently failing.
 const PAYOUT_METHODS: { key: PayoutRail; label: string }[] = [
   { key: 'mtn', label: 'MTN MoMo' },
   { key: 'telecel', label: 'Telecel Cash' },
   { key: 'airtel', label: 'Airtel Money' },
-  { key: 'bank', label: 'Bank transfer' },
 ];
 
-// Mirrors the customer app's WithdrawScreen pattern, reusing the same payment-rail
-// badge colors for payout selection (DRIVER_APP_HANDOFF.md §4).
 export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>) {
   const { colors } = useTheme();
   const [balance, setBalance] = useState<number | null>(null);
@@ -31,7 +33,10 @@ export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>)
   const [success, setSuccess] = useState<{ reference: string; newBalanceGHS: number } | null>(null);
 
   useEffect(() => {
-    getWalletBalance().then(b => setBalance(b.availableGHS));
+    walletService
+      .getWallet()
+      .then((res) => setBalance(res.data.wallet.available_balance))
+      .catch(() => {});
   }, []);
 
   const parsedAmount = parseFloat(amount);
@@ -46,13 +51,19 @@ export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>)
   const handleSubmit = async () => {
     setError(null);
     setSubmitting(true);
-    const result = await submitWithdrawal({ amountGHS: parsedAmount, rail, accountDetail: accountDetail.trim() });
-    setSubmitting(false);
-    if ('error' in result) {
-      setError(result.error);
-      return;
+    try {
+      const res = await walletService.withdraw({
+        amount: parsedAmount,
+        phone: accountDetail.trim(),
+        provider: rail,
+      });
+      const newBalance = (balance ?? 0) - parsedAmount;
+      setSuccess({ reference: res.data.reference, newBalanceGHS: newBalance });
+    } catch (err: any) {
+      setError(err?.response?.data?.error?.message ?? 'Withdrawal failed. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
-    setSuccess({ reference: result.reference, newBalanceGHS: result.newBalanceGHS });
   };
 
   if (success) {
@@ -155,11 +166,11 @@ export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>)
       </View>
 
       <FormField
-        label={rail === 'bank' ? 'Bank account number' : 'Mobile money number'}
+        label="Mobile money number"
         value={accountDetail}
         onChangeText={setAccountDetail}
-        keyboardType={rail === 'bank' ? 'number-pad' : 'phone-pad'}
-        placeholder={rail === 'bank' ? '0123456789' : '024 123 4567'}
+        keyboardType="phone-pad"
+        placeholder="024 123 4567"
       />
 
       {error ? (

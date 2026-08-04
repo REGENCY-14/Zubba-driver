@@ -5,11 +5,20 @@ import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
-import type { IncomingJobRequest } from '../../services/mock/jobsMock';
 
-// ~15-30s broadcast countdown per spec §9.2 — auto-declines at zero, same as a
-// real dispatch timeout would.
+// 20s response countdown — auto-declines at zero, same as a real dispatch
+// timeout would.
 const COUNTDOWN_SECONDS = 20;
+
+export interface IncomingJobRequest {
+  id: string;
+  customerName: string;
+  pickupAddress: string;
+  distanceKm: number;
+  etaMinutes: number;
+  estimatedPay: number;
+  bagsEstimate: number;
+}
 
 interface IncomingRequestModalProps {
   request: IncomingJobRequest | null;

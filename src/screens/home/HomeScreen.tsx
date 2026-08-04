@@ -1,62 +1,161 @@
-import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ScrollView, Switch, Text, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
-import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AppBottomNav } from '../../components/AppBottomNav';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
-import { setMatchingMode, setOnline } from '../../slices/driverStatus/driverStatusSlice';
+import { setOnline } from '../../slices/driverStatus/driverStatusSlice';
 import { toggleSidebar } from '../../slices/ui/uiSlice';
-import { getTodayEarningsSummary, TodayEarningsSummary } from '../../services/mock/earningsMock';
-import { getIncomingJobRequest, respondToJobRequest, IncomingJobRequest } from '../../services/mock/jobsMock';
-import { getMyDriverPublicProfile, DriverPublicProfile } from '../../services/mock/driverPublicProfileMock';
-import { IncomingRequestModal } from './IncomingRequestModal';
+import { driverService } from '../../api/driverService';
+import { handleApiError } from '../../utils/handleApiError';
+import { syncPushNotifications } from '../../services/pushNotifications';
+import { IncomingRequestModal, IncomingJobRequest } from './IncomingRequestModal';
+import type { DriverRequestItem } from '../../types/request.types';
 import type { RootState } from '../../store';
 import type { RootStackScreenProps } from '../../navigation/types';
+
+const POLL_INTERVAL_MS = 4000;
+
+interface TodayEarningsSummary {
+  totalGHS: number;
+  completedJobs: number;
+  bagsCollected: number;
+}
+
+function toIncomingJobRequest(request: DriverRequestItem): IncomingJobRequest {
+  const distanceKm = request.distance_m / 1000;
+  return {
+    id: request.id,
+    customerName:
+      [request.customer_firstname, request.customer_lastname].filter(Boolean).join(' ') || 'A customer',
+    pickupAddress: request.pickup_address,
+    distanceKm: Number(distanceKm.toFixed(1)),
+    etaMinutes: Math.max(1, Math.round(distanceKm * 2)),
+    estimatedPay: Number(request.pickup_price) + Number(request.service_price),
+    bagsEstimate: request.bags ? Math.round(Number(request.bags)) : 1,
+  };
+}
 
 export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
   const { colors } = useTheme();
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
-  const { isOnline, matchingMode } = useSelector((state: RootState) => state.driverStatus);
+  const { isOnline } = useSelector((state: RootState) => state.driverStatus);
 
   const [earnings, setEarnings] = useState<TodayEarningsSummary | null>(null);
-  const [publicProfile, setPublicProfile] = useState<DriverPublicProfile | null>(null);
-  const [incomingRequest, setIncomingRequest] = useState<IncomingJobRequest | null>(null);
-  const [requestLoading, setRequestLoading] = useState(false);
+  const [incomingRequest, setIncomingRequest] = useState<DriverRequestItem | null>(null);
+  const seenRequestIds = useRef<Set<string>>(new Set());
+  const respondingRef = useRef(false);
 
   useEffect(() => {
-    getTodayEarningsSummary().then(setEarnings);
+    syncPushNotifications().catch(() => {});
+  }, []);
+
+  const loadTodayEarnings = useCallback(async () => {
+    try {
+      const res = await driverService.getMyRequests({ status: 'completed', limit: 100 });
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const todaysJobs = res.data.items.filter(
+        (r) => r.completed_at && new Date(r.completed_at) >= startOfToday,
+      );
+      const totalGHS = todaysJobs.reduce(
+        (sum, r) => sum + Number(r.pickup_price) + Number(r.service_price),
+        0,
+      );
+      const bagsCollected = todaysJobs.reduce((sum, r) => sum + Number(r.bags ?? 0), 0);
+      setEarnings({ totalGHS, completedJobs: todaysJobs.length, bagsCollected });
+    } catch {
+      // non-critical — leave earnings card in its loading state
+    }
   }, []);
 
   useEffect(() => {
-    if (isOnline && matchingMode === 'customer_selects' && !publicProfile) {
-      getMyDriverPublicProfile().then(setPublicProfile);
-    }
-  }, [isOnline, matchingMode, publicProfile]);
+    loadTodayEarnings();
+  }, [loadTodayEarnings]);
 
-  const handleToggleOnline = (next: boolean) => {
+  const handleToggleOnline = async (next: boolean) => {
     dispatch(setOnline(next));
-    if (!next) setIncomingRequest(null);
+    if (!next) {
+      setIncomingRequest(null);
+      driverService.updateMe({ is_available: false }).catch(() => {});
+      return;
+    }
+
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        await driverService.updateMe({ is_available: true });
+        return;
+      }
+      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      await driverService.updateMe({
+        is_available: true,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      });
+    } catch (err) {
+      handleApiError(err);
+    }
   };
 
-  const handleSimulateIncoming = async () => {
-    setRequestLoading(true);
-    const request = await getIncomingJobRequest();
-    setRequestLoading(false);
-    setIncomingRequest(request);
-  };
+  // Polling is the real "incoming request" mechanism — push notifications
+  // (syncPushNotifications above) are a best-effort supplement for when the app
+  // is backgrounded, not the primary delivery path.
+  useEffect(() => {
+    if (!isOnline) return;
+
+    let cancelled = false;
+    const poll = async () => {
+      if (respondingRef.current) return;
+      try {
+        // "paid" is included because a customer can pay upfront before the
+        // driver responds, which moves status off "pending" without a driver
+        // decision ever having happened.
+        const res = await driverService.getMyRequests({ status: 'pending,paid', limit: 1 });
+        if (cancelled) return;
+        const pending = res.data.items[0];
+        if (pending && !seenRequestIds.current.has(pending.id)) {
+          // Keep the same object reference across polls for a request already
+          // being shown — replacing it every tick would reset the modal's
+          // response countdown even though nothing about the request changed.
+          setIncomingRequest((current) => (current?.id === pending.id ? current : pending));
+        }
+      } catch {
+        // transient network error — try again next tick
+      }
+    };
+
+    poll();
+    const interval = setInterval(poll, POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [isOnline]);
 
   const handleRespond = async (response: 'accept' | 'decline') => {
     if (!incomingRequest) return;
-    const currentId = incomingRequest.id;
+    const request = incomingRequest;
+    seenRequestIds.current.add(request.id);
     setIncomingRequest(null);
-    await respondToJobRequest(currentId, response);
+    respondingRef.current = true;
+    try {
+      await driverService.updateRequestStatus(request.id, response === 'accept' ? 'accepted' : 'cancelled');
+      if (response === 'accept') {
+        navigation.navigate('JobDetail', { jobId: request.id });
+      }
+    } catch (err) {
+      handleApiError(err);
+    } finally {
+      respondingRef.current = false;
+    }
   };
 
   const initials = user
@@ -165,163 +264,32 @@ export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
               )}
             </Card>
 
-            <View style={{ flexDirection: 'row', gap: moderateScale(8) }}>
-              <Pressable
-                onPress={() => dispatch(setMatchingMode('broadcast'))}
-                accessibilityRole="button"
-                accessibilityState={{ selected: matchingMode === 'broadcast' }}
-                style={{
-                  flex: 1,
-                  minHeight: moderateScale(44),
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderRadius: moderateScale(12),
-                  backgroundColor: matchingMode === 'broadcast' ? COLORS.brandGreen : colors.surface,
-                  borderWidth: 1,
-                  borderColor: matchingMode === 'broadcast' ? COLORS.brandGreen : colors.border,
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: 'Poppins_500Medium',
-                    fontSize: moderateScale(12),
-                    color: matchingMode === 'broadcast' ? '#FFFFFF' : colors.text,
-                  }}
-                >
-                  Auto-assign
+            <Card>
+              <View style={{ gap: moderateScale(12), alignItems: 'center' }}>
+                <MaterialCommunityIcons name="radar" size={moderateScale(36)} color={COLORS.brandGreen} />
+                <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(14), color: colors.text }}>
+                  Waiting for job requests
                 </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => dispatch(setMatchingMode('customer_selects'))}
-                accessibilityRole="button"
-                accessibilityState={{ selected: matchingMode === 'customer_selects' }}
-                style={{
-                  flex: 1,
-                  minHeight: moderateScale(44),
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderRadius: moderateScale(12),
-                  backgroundColor: matchingMode === 'customer_selects' ? COLORS.brandGreen : colors.surface,
-                  borderWidth: 1,
-                  borderColor: matchingMode === 'customer_selects' ? COLORS.brandGreen : colors.border,
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: 'Poppins_500Medium',
-                    fontSize: moderateScale(12),
-                    color: matchingMode === 'customer_selects' ? '#FFFFFF' : colors.text,
-                  }}
-                >
-                  Customer selects
-                </Text>
-              </Pressable>
-            </View>
-
-            {matchingMode === 'broadcast' ? (
-              <Card>
-                <View style={{ gap: moderateScale(12), alignItems: 'center' }}>
-                  <MaterialCommunityIcons name="radar" size={moderateScale(36)} color={COLORS.brandGreen} />
-                  <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(14), color: colors.text }}>
-                    Waiting for job requests
-                  </Text>
-                  <Button
-                    label="Simulate incoming request"
-                    variant="secondary"
-                    onPress={handleSimulateIncoming}
-                    loading={requestLoading}
-                  />
-                </View>
-              </Card>
-            ) : (
-              <Card>
-                <Text
-                  style={{
-                    fontFamily: 'Poppins_600SemiBold',
-                    fontSize: moderateScale(14),
-                    color: colors.text,
-                    marginBottom: moderateScale(12),
-                  }}
-                >
-                  How customers see you
-                </Text>
-                {publicProfile ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(12) }}>
-                    <View
-                      style={{
-                        width: moderateScale(48),
-                        height: moderateScale(48),
-                        borderRadius: moderateScale(24),
-                        backgroundColor: COLORS.brandGreen,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(16), color: '#FFFFFF' }}>
-                        {initials}
-                      </Text>
-                    </View>
-                    <View style={{ flex: 1, gap: moderateScale(2) }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(6) }}>
-                        <Text
-                          style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(14), color: colors.text }}
-                        >
-                          {firstName} {user?.lastname ?? ''}
-                        </Text>
-                        {publicProfile.isPremium && (
-                          <View
-                            style={{
-                              paddingHorizontal: moderateScale(6),
-                              paddingVertical: moderateScale(2),
-                              borderRadius: 9999,
-                              backgroundColor: COLORS.premiumGoldBg,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontFamily: 'Poppins_600SemiBold',
-                                fontSize: moderateScale(9),
-                                color: COLORS.premiumGoldText,
-                              }}
-                            >
-                              PREMIUM
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: colors.textSub }}>
-                        {publicProfile.code} • {publicProfile.distanceKm}km • {publicProfile.etaMinutes} min away
-                      </Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(4) }}>
-                        <MaterialCommunityIcons name="star" size={moderateScale(13)} color="#FEC002" />
-                        <Text style={{ fontFamily: 'Poppins_500Medium', fontSize: moderateScale(12), color: colors.text }}>
-                          {publicProfile.rating.toFixed(1)} ({publicProfile.ratingCount})
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                ) : (
-                  <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(13), color: colors.textSub }}>
-                    Loading…
-                  </Text>
-                )}
                 <Text
                   style={{
                     fontFamily: 'Poppins_400Regular',
-                    fontSize: moderateScale(11),
-                    color: colors.textMuted,
-                    marginTop: moderateScale(10),
+                    fontSize: moderateScale(12),
+                    color: colors.textSub,
+                    textAlign: 'center',
                   }}
                 >
-                  This is what nearby premium customers see when choosing a driver.
+                  You'll be notified the moment a customer requests a pickup with you.
                 </Text>
-              </Card>
-            )}
+              </View>
+            </Card>
           </>
         )}
       </ScrollView>
 
-      <IncomingRequestModal request={incomingRequest} onRespond={handleRespond} />
+      <IncomingRequestModal
+        request={incomingRequest ? toIncomingJobRequest(incomingRequest) : null}
+        onRespond={handleRespond}
+      />
 
       <AppBottomNav activeTab="home" navigation={navigation} />
     </View>

@@ -1,22 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { OTPInput } from '../../components/common/OTPInput';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
-import { requestOtp, verifyOtp } from '../../services/mock/authMock';
+import { authService } from '../../api/authService';
 import { setCredentials } from '../../slices/auth/authSlice';
 import { saveAuthTokens, saveAuthUser } from '../../utils/authStorage';
-import type { RootState } from '../../store';
+import { syncPushNotifications } from '../../services/pushNotifications';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 export function VerifyOtpScreen({ navigation, route }: RootStackScreenProps<'VerifyOtp'>) {
-  const { phone, purpose } = route.params;
+  const { phone } = route.params;
   const { colors } = useTheme();
   const dispatch = useDispatch();
-  const applicationStatus = useSelector((state: RootState) => state.driverProfile.applicationStatus);
 
   const [digits, setDigits] = useState<string[]>(['', '', '', '']);
   const [error, setError] = useState<string | null>(null);
@@ -32,45 +31,42 @@ export function VerifyOtpScreen({ navigation, route }: RootStackScreenProps<'Ver
   const handleComplete = async (otp: string) => {
     setLoading(true);
     setError(null);
-    const result = await verifyOtp(phone, otp);
-    setLoading(false);
+    try {
+      // Backend always issues the OTP with purpose "login" from /auth/register,
+      // regardless of whether this is a first-time signup or a returning
+      // sign-in — `purpose` here is only used for this screen's own navigation.
+      const result = await authService.verifyOtp({
+        authKey: 'phone',
+        authValue: phone,
+        otp,
+        purpose: 'login',
+      });
 
-    if ('error' in result) {
-      setError(result.error);
-      setDigits(['', '', '', '']);
-      return;
-    }
+      const { accessToken, refreshToken, user } = result.data;
+      dispatch(setCredentials({ user, accessToken, refreshToken }));
+      await saveAuthTokens({ accessToken, refreshToken });
+      await saveAuthUser(user);
+      syncPushNotifications().catch(() => {});
 
-    dispatch(
-      setCredentials({
-        user: result.user,
-        accessToken: result.tokens.accessToken,
-        refreshToken: result.tokens.refreshToken,
-      })
-    );
-    await saveAuthTokens(result.tokens);
-    await saveAuthUser(result.user);
-
-    if (purpose === 'registration') {
-      navigation.reset({ index: 0, routes: [{ name: 'Kyc' }] });
-      return;
-    }
-
-    switch (applicationStatus) {
-      case 'approved':
+      if (user.terms_accepted_at) {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-        break;
-      case 'pending_review':
-      case 'rejected':
-        navigation.reset({ index: 0, routes: [{ name: 'ApplicationStatus' }] });
-        break;
-      default:
+      } else {
         navigation.reset({ index: 0, routes: [{ name: 'Kyc' }] });
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.error?.message ?? 'Invalid code. Try again.');
+      setDigits(['', '', '', '']);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleResend = async () => {
-    await requestOtp(phone);
+    try {
+      await authService.resendOtp({ authKey: 'phone', authValue: phone, purpose: 'login' });
+    } catch {
+      // best-effort — resend cooldown still resets so the user can retry
+    }
     setResendIn(30);
   };
 
@@ -83,7 +79,7 @@ export function VerifyOtpScreen({ navigation, route }: RootStackScreenProps<'Ver
             Enter verification code
           </Text>
           <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(13), color: colors.textSub }}>
-            Sent to {phone} (mock code: 1234)
+            Sent to {phone}
           </Text>
         </View>
 

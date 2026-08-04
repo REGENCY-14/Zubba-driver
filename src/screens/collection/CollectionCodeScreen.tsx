@@ -9,24 +9,26 @@ import { OTPInput } from '../../components/common/OTPInput';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
-import {
-  getJobById,
-  verifyCollectionCode,
-  submitPickupLog,
-  Job,
-  PickupLogResult,
-} from '../../services/mock/jobsMock';
+import { driverService } from '../../api/driverService';
+import { toJob, Job } from '../../utils/jobMapping';
+import { handleApiError } from '../../utils/handleApiError';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 type Step = 'code' | 'logging' | 'success';
 
+interface PickupLogResult {
+  bags: number;
+  weightKg: number;
+  amountEarned: number;
+}
+
 const MIN_BAGS = 1;
 const MAX_BAGS = 20;
 
-// Collection-code entry reuses the ported OTPInput pattern (DRIVER_APP_HANDOFF.md's
-// correction: the spec's cross-reference to PaymentVerificationScreen was wrong —
-// that screen has no keypad at all). Validated against each job's hardcoded mock
-// collectionCode, then hands off to the bag-count/weight logging form.
+// Collection-code handshake: the 4-digit code is generated server-side at
+// request creation (requests.collection_code) and shown to the customer in
+// their app — verified here client-side against the value already fetched
+// with the job, no separate "verify" endpoint exists or is needed.
 export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps<'CollectionCode'>) {
   const { jobId } = route.params;
   const { colors } = useTheme();
@@ -44,15 +46,17 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
   const [result, setResult] = useState<PickupLogResult | null>(null);
 
   useEffect(() => {
-    getJobById(jobId).then(j => setJob(j ?? null));
+    driverService
+      .getRequestById(jobId)
+      .then((res) => setJob(toJob(res.data)))
+      .catch((err) => handleApiError(err));
   }, [jobId]);
 
   const handleCodeComplete = async (code: string) => {
     setVerifying(true);
     setCodeError(null);
-    const { valid } = await verifyCollectionCode(jobId, code);
     setVerifying(false);
-    if (!valid) {
+    if (!job || code !== job.collectionCode) {
       setCodeError('Incorrect code. Ask the customer to confirm it and try again.');
       setDigits(['', '', '', '']);
       return;
@@ -64,12 +68,23 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
   const canSubmitLog = weightKg.length > 0 && !Number.isNaN(parsedWeight) && parsedWeight > 0;
 
   const handleSubmitLog = async () => {
-    if (!canSubmitLog) return;
+    if (!canSubmitLog || !job) return;
     setSubmitting(true);
-    const logResult = await submitPickupLog(jobId, bags, parsedWeight);
-    setSubmitting(false);
-    setResult(logResult);
-    setStep('success');
+    try {
+      await driverService.submitBags(job.id, bags);
+      const res = await driverService.updateRequestStatus(job.id, 'completed');
+      const completed = toJob(res.data.request);
+      setResult({
+        bags,
+        weightKg: parsedWeight,
+        amountEarned: completed.amountEarned ?? completed.estimatedPay,
+      });
+      setStep('success');
+    } catch (err) {
+      handleApiError(err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!job) {

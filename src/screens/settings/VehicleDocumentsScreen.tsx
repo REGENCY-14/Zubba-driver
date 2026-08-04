@@ -8,8 +8,11 @@ import { ImagePickerField } from '../../components/common/ImagePickerField';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
 import { submitKyc } from '../../slices/driverProfile/driverProfileSlice';
-import type { VehicleType } from '../../slices/driverProfile/driverProfile.types';
+import { driverService } from '../../api/driverService';
+import { uploadKycDocument } from '../../services/kycUploadService';
+import { handleApiError } from '../../utils/handleApiError';
 import type { RootState } from '../../store';
+import type { VehicleType } from '../../slices/driverProfile/driverProfile.types';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 const VEHICLE_TYPES: { key: VehicleType; label: string }[] = [
@@ -26,6 +29,7 @@ export function VehicleDocumentsScreen({ navigation }: RootStackScreenProps<'Veh
   const { colors } = useTheme();
   const dispatch = useDispatch();
   const kyc = useSelector((state: RootState) => state.driverProfile.kyc);
+  const user = useSelector((state: RootState) => state.auth.user);
 
   const [ghanaCardNumber, setGhanaCardNumber] = useState(kyc?.ghanaCardNumber ?? '');
   const [ghanaCardImage, setGhanaCardImage] = useState<string | null>(kyc?.ghanaCardImage ?? null);
@@ -40,22 +44,53 @@ export function VehicleDocumentsScreen({ navigation }: RootStackScreenProps<'Veh
     ghanaCardNumber.trim() && driversLicenseNumber.trim() && plateNumber.trim() && vehiclePhoto
   );
 
-  const handleSave = () => {
+  const uploadIfChanged = async (
+    kind: 'ghana-card' | 'drivers-license' | 'vehicle',
+    next: string | null,
+    previous: string | null | undefined,
+  ) => {
+    if (!user || !next || next === previous || next.startsWith('http')) return next ?? undefined;
+    return uploadKycDocument(user.id, kind, next);
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
     setSaving(true);
-    dispatch(
-      submitKyc({
-        ghanaCardNumber,
-        ghanaCardImage,
-        driversLicenseNumber,
-        driversLicenseImage,
-        vehicleType,
-        plateNumber,
-        vehiclePhoto,
-        profilePhoto: kyc?.profilePhoto ?? null,
-      })
-    );
-    setSaving(false);
-    navigation.goBack();
+    try {
+      const [ghanaCardPhoto, driversLicensePhoto, vehiclePhotoUrl] = await Promise.all([
+        uploadIfChanged('ghana-card', ghanaCardImage, kyc?.ghanaCardImage),
+        uploadIfChanged('drivers-license', driversLicenseImage, kyc?.driversLicenseImage),
+        uploadIfChanged('vehicle', vehiclePhoto, kyc?.vehiclePhoto),
+      ]);
+
+      await driverService.updateMe({
+        vehicle_plate: plateNumber,
+        vehicle_type: vehicleType,
+        ghana_card_number: ghanaCardNumber,
+        drivers_license_number: driversLicenseNumber,
+        ...(ghanaCardPhoto ? { ghana_card_photo: ghanaCardPhoto } : {}),
+        ...(driversLicensePhoto ? { drivers_license_photo: driversLicensePhoto } : {}),
+        ...(vehiclePhotoUrl ? { vehicle_photo: vehiclePhotoUrl } : {}),
+      });
+
+      dispatch(
+        submitKyc({
+          ghanaCardNumber,
+          ghanaCardImage: ghanaCardPhoto ?? ghanaCardImage,
+          driversLicenseNumber,
+          driversLicenseImage: driversLicensePhoto ?? driversLicenseImage,
+          vehicleType,
+          plateNumber,
+          vehiclePhoto: vehiclePhotoUrl ?? vehiclePhoto,
+          profilePhoto: kyc?.profilePhoto ?? null,
+        })
+      );
+      navigation.goBack();
+    } catch (err) {
+      handleApiError(err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

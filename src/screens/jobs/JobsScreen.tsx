@@ -8,7 +8,8 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
-import { getActiveJobs, getUpcomingJobs, getJobHistory, Job, JobStatus } from '../../services/mock/jobsMock';
+import { driverService } from '../../api/driverService';
+import { toJob, Job, JobStatus } from '../../utils/jobMapping';
 import { toggleSidebar } from '../../slices/ui/uiSlice';
 import type { RootStackScreenProps } from '../../navigation/types';
 
@@ -21,9 +22,10 @@ const TABS: { key: JobsTab; label: string }[] = [
 ];
 
 const STATUS_LABEL: Record<JobStatus, string> = {
+  paid: 'Paid',
+  accepted: 'Accepted',
   en_route: 'En route',
   arrived: 'Arrived',
-  scheduled: 'Scheduled',
   completed: 'Completed',
   cancelled: 'Cancelled',
 };
@@ -41,7 +43,7 @@ const EMPTY_COPY: Record<JobsTab, { title: string; subtitle: string }> = {
   },
   upcoming: {
     title: 'No upcoming jobs',
-    subtitle: 'Scheduled pickups a customer has pinned you for will show up here.',
+    subtitle: 'Scheduled pickup assignments for drivers are not available yet.',
   },
   history: {
     title: 'No job history yet',
@@ -59,14 +61,23 @@ export function JobsScreen({ navigation }: RootStackScreenProps<'Jobs'>) {
   const load = useCallback(async (tab: JobsTab) => {
     setLoading(true);
     setJobs([]);
-    const data =
-      tab === 'active'
-        ? await getActiveJobs()
-        : tab === 'upcoming'
-        ? await getUpcomingJobs()
-        : await getJobHistory();
-    setJobs(data);
-    setLoading(false);
+
+    if (tab === 'upcoming') {
+      // No backend endpoint exposes a driver's upcoming scheduled pickups yet
+      // (schedules are customer-only) — real empty state, not fabricated data.
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const status = tab === 'active' ? 'paid,accepted,en_route,arrived' : 'completed,cancelled';
+      const res = await driverService.getMyRequests({ status, limit: 50 });
+      setJobs(res.data.items.map(toJob));
+    } catch {
+      setJobs([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

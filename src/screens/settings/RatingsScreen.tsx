@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Card } from '../../components/common/Card';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
-import { getRatingsSummary, getJobFeedback, RatingsSummary, JobFeedback } from '../../services/mock/ratingsMock';
+import { ratingService, DriverRatingItem, DriverRatingSummary } from '../../api/ratingService';
+import { handleApiError } from '../../utils/handleApiError';
+import type { RootState } from '../../store';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 function Stars({ rating }: { rating: number }) {
@@ -44,13 +47,20 @@ function StatBlock({ label, value }: { label: string; value: string }) {
 
 export function RatingsScreen({ navigation }: RootStackScreenProps<'Ratings'>) {
   const { colors } = useTheme();
-  const [summary, setSummary] = useState<RatingsSummary | null>(null);
-  const [feedback, setFeedback] = useState<JobFeedback[]>([]);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const [summary, setSummary] = useState<DriverRatingSummary | null>(null);
+  const [feedback, setFeedback] = useState<DriverRatingItem[]>([]);
 
   useEffect(() => {
-    getRatingsSummary().then(setSummary);
-    getJobFeedback().then(setFeedback);
-  }, []);
+    if (!user) return;
+    ratingService
+      .getDriverRating(user.id, { limit: 50 })
+      .then((res) => {
+        setSummary(res.data);
+        setFeedback(res.data.items.filter((item) => item.comment));
+      })
+      .catch((err) => handleApiError(err));
+  }, [user]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -65,9 +75,9 @@ export function RatingsScreen({ navigation }: RootStackScreenProps<'Ratings'>) {
         {summary ? (
           <View style={{ alignItems: 'center', gap: moderateScale(6) }}>
             <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(36), color: colors.text }}>
-              {summary.averageRating.toFixed(1)}
+              {Number(summary.averageScore).toFixed(1)}
             </Text>
-            <Stars rating={summary.averageRating} />
+            <Stars rating={Number(summary.averageScore)} />
             <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: colors.textSub }}>
               from {summary.totalRatings} ratings
             </Text>
@@ -79,12 +89,12 @@ export function RatingsScreen({ navigation }: RootStackScreenProps<'Ratings'>) {
         )}
       </Card>
 
-      {summary && (
+      {summary && Number(summary.totalRatings) > 0 && (
         <Card>
           <View style={{ flexDirection: 'row' }}>
-            <StatBlock label="Acceptance rate" value={`${summary.acceptanceRate}%`} />
-            <StatBlock label="Completion rate" value={`${summary.completionRate}%`} />
-            <StatBlock label="On-time rate" value={`${summary.onTimeRate}%`} />
+            <StatBlock label="Service" value={Number(summary.serviceRating).toFixed(1)} />
+            <StatBlock label="Professionalism" value={Number(summary.professionalismRating).toFixed(1)} />
+            <StatBlock label="Eco-friendly" value={Number(summary.ecoFriendlyRating).toFixed(1)} />
           </View>
         </Card>
       )}
@@ -104,19 +114,16 @@ export function RatingsScreen({ navigation }: RootStackScreenProps<'Ratings'>) {
           }}
         >
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(13), color: colors.text }}>
-              {item.customerName}
+            <Stars rating={item.score} />
+            <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(11), color: colors.textMuted }}>
+              {new Date(item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
             </Text>
-            <Stars rating={item.rating} />
           </View>
           {item.comment ? (
             <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: colors.textSub }}>
               "{item.comment}"
             </Text>
           ) : null}
-          <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(11), color: colors.textMuted }}>
-            {new Date(item.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-          </Text>
         </View>
       ))}
       </ScrollView>
