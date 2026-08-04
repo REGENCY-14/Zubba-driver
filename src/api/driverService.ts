@@ -32,7 +32,7 @@ export const driverService = {
 
   submitBags: async (requestId: string, bags: number) => {
     const { data } = await api.patch<ApiResponse<{ request: DriverRequestItem }>>(
-      `/drivers/requests/${requestId}`,
+      `/drivers/requests/${requestId}/bags`,
       { bags },
     );
     return data;
