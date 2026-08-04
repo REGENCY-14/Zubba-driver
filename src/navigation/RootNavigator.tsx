@@ -13,6 +13,7 @@ import { ApplicationStatusScreen } from '../screens/onboarding/ApplicationStatus
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { JobsScreen } from '../screens/jobs/JobsScreen';
 import { JobDetailScreen } from '../screens/jobs/JobDetailScreen';
+import { RouteMapScreen } from '../screens/jobs/RouteMapScreen';
 import { CollectionCodeScreen } from '../screens/collection/CollectionCodeScreen';
 import { EarningsScreen } from '../screens/earnings/EarningsScreen';
 import { WithdrawScreen } from '../screens/earnings/WithdrawScreen';
@@ -47,6 +48,7 @@ export function RootNavigator() {
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Jobs" component={JobsScreen} />
       <Stack.Screen name="JobDetail" component={JobDetailScreen} />
+      <Stack.Screen name="RouteMap" component={RouteMapScreen} />
       <Stack.Screen name="CollectionCode" component={CollectionCodeScreen} />
       <Stack.Screen name="Earnings" component={EarningsScreen} />
       <Stack.Screen name="Withdraw" component={WithdrawScreen} />

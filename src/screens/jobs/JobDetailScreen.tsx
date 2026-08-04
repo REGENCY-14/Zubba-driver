@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { StatusPill, StatusKind } from '../../components/common/StatusPill';
-import { MockMapView } from '../../components/common/MockMapView';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
@@ -87,7 +86,37 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
       <ScrollView
         contentContainerStyle={{ padding: moderateScale(20), gap: moderateScale(16), paddingBottom: moderateScale(48) }}
       >
-      <MockMapView distanceKm={job.distanceKm} etaMinutes={job.etaMinutes} />
+      <Pressable
+        onPress={() => navigation.navigate('RouteMap', { jobId: job.id })}
+        accessibilityRole="button"
+        accessibilityLabel="View live route"
+      >
+        <Card>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(12) }}>
+            <View
+              style={{
+                width: moderateScale(44),
+                height: moderateScale(44),
+                borderRadius: moderateScale(22),
+                backgroundColor: `${COLORS.brandGreen}1A`,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <MaterialCommunityIcons name="map-marker-path" size={moderateScale(22)} color={COLORS.brandGreen} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(14), color: colors.text }}>
+                View live route
+              </Text>
+              <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: colors.textSub }}>
+                {job.distanceKm} km • {job.etaMinutes} min away
+              </Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={moderateScale(22)} color={colors.textSub} />
+          </View>
+        </Card>
+      </Pressable>
 
       <Card>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>

@@ -5,6 +5,8 @@ type AppExtra = {
   supabaseUrl?: string;
   supabaseAnonKey?: string;
   supabaseDriverDocsBucket?: string;
+  googleMapsApiKey?: string;
+  maptilerKey?: string;
 };
 
 function readEnv(key: string, extraKey?: keyof AppExtra): string {
@@ -29,4 +31,6 @@ export const env = {
     'EXPO_PUBLIC_SUPABASE_DRIVER_DOCS_BUCKET',
     'supabaseDriverDocsBucket',
   ),
+  googleMapsApiKey: readEnv('EXPO_PUBLIC_GOOGLE_MAPS_API_KEY', 'googleMapsApiKey'),
+  maptilerKey: readEnv('EXPO_PUBLIC_MAPTILER_KEY', 'maptilerKey'),
 };

@@ -14,6 +14,7 @@ export type RootStackParamList = {
   Home: undefined;
   Jobs: undefined;
   JobDetail: { jobId: string };
+  RouteMap: { jobId: string };
   CollectionCode: { jobId: string };
   Earnings: undefined;
   Withdraw: undefined;
