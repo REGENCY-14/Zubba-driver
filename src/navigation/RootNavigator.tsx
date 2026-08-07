@@ -16,6 +16,8 @@ import { JobDetailScreen } from '../screens/jobs/JobDetailScreen';
 import { RouteMapScreen } from '../screens/jobs/RouteMapScreen';
 import { CollectionCodeScreen } from '../screens/collection/CollectionCodeScreen';
 import { EarningsScreen } from '../screens/earnings/EarningsScreen';
+import { DepositMethodScreen } from '../screens/earnings/DepositMethodScreen';
+import { CreditAccountScreen } from '../screens/earnings/CreditAccountScreen';
 import { WithdrawScreen } from '../screens/earnings/WithdrawScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { ProfileScreen } from '../screens/settings/ProfileScreen';
@@ -51,6 +53,8 @@ export function RootNavigator() {
       <Stack.Screen name="RouteMap" component={RouteMapScreen} />
       <Stack.Screen name="CollectionCode" component={CollectionCodeScreen} />
       <Stack.Screen name="Earnings" component={EarningsScreen} />
+      <Stack.Screen name="DepositMethod" component={DepositMethodScreen} />
+      <Stack.Screen name="CreditAccount" component={CreditAccountScreen} />
       <Stack.Screen name="Withdraw" component={WithdrawScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />

@@ -1,6 +1,7 @@
 import { Text, View } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import type { RootStackScreenProps } from '../../navigation/types';
 
@@ -8,14 +9,14 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
   const { colors } = useTheme();
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: colors.bg,
-        padding: moderateScale(24),
-        justifyContent: 'space-between',
-      }}
-    >
+    <ScreenShell>
+      <View
+        style={{
+          flex: 1,
+          padding: moderateScale(24),
+          justifyContent: 'space-between',
+        }}
+      >
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: moderateScale(12) }}>
         <View
           style={{
@@ -54,6 +55,7 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
           onPress={() => navigation.navigate('SignIn')}
         />
       </View>
-    </View>
+      </View>
+    </ScreenShell>
   );
 }

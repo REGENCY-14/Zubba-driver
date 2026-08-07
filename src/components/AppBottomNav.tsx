@@ -3,7 +3,8 @@ import { Pressable, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import { scale, verticalScale, moderateScale } from '../utils/scale';
+import { scale, moderateScale } from '../utils/scale';
+import { useBottomNavOffset } from '../utils/screenInsets';
 
 export type DriverTab = 'home' | 'jobs' | 'earnings' | 'settings';
 
@@ -13,7 +14,6 @@ export type DriverTab = 'home' | 'jobs' | 'earnings' | 'settings';
 type Props = {
   activeTab: DriverTab;
   navigation: any;
-  bottomOffset?: number;
 };
 
 type TabDef = {
@@ -95,8 +95,9 @@ function NavItem({
   );
 }
 
-export function AppBottomNav({ activeTab, navigation, bottomOffset = 0 }: Props) {
+export function AppBottomNav({ activeTab, navigation }: Props) {
   const { colors } = useTheme();
+  const bottomOffset = useBottomNavOffset();
 
   return (
     <View
@@ -107,7 +108,7 @@ export function AppBottomNav({ activeTab, navigation, bottomOffset = 0 }: Props)
         right: 0,
         bottom: 0,
         alignItems: 'center',
-        paddingBottom: verticalScale(12) + bottomOffset,
+        paddingBottom: bottomOffset,
       }}
     >
       <View
@@ -120,7 +121,7 @@ export function AppBottomNav({ activeTab, navigation, bottomOffset = 0 }: Props)
           backgroundColor: colors.card,
           borderWidth: 1,
           borderColor: colors.border,
-          paddingVertical: verticalScale(6),
+          paddingVertical: moderateScale(6),
           paddingHorizontal: scale(8),
           shadowColor: '#0F172A',
           shadowOpacity: 0.08,

@@ -6,7 +6,9 @@ import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { StatusPill, StatusKind } from '../../components/common/StatusPill';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
 import { driverService } from '../../api/driverService';
 import { toJob, Job, JobStatus } from '../../utils/jobMapping';
@@ -29,11 +31,25 @@ function statusPillKind(status: JobStatus): StatusKind {
   return 'pending';
 }
 
+// Backend only allows single-step transitions from this screen (paid ->
+// accepted -> en_route -> arrived) — the next status is always derived from
+// the current one rather than requested directly. There is no arrived ->
+// completed transition anymore: once arrived, the only self-service action
+// is "Enter collection code" (below), and completion only happens via the
+// Confirm Collection flow in CollectionCodeScreen after the customer pays
+// and the request reaches "paid".
+const NEXT_STATUS: Partial<Record<JobStatus, JobStatus>> = {
+  paid: 'accepted',
+  accepted: 'en_route',
+  en_route: 'arrived',
+};
+
 export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'JobDetail'>) {
   const { jobId } = route.params;
   const { colors } = useTheme();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(false);
+  const scrollBottomPadding = useScrollBottomPadding();
 
   const load = useCallback(async () => {
     try {
@@ -48,13 +64,10 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
     load();
   }, [load]);
 
-  // Backend only allows single-step transitions (paid -> accepted -> en_route ->
-  // arrived), so the next status is always derived from the current one rather
-  // than requested directly.
   const advanceStatus = async () => {
     if (!job) return;
-    const nextStatus =
-      job.status === 'paid' ? 'accepted' : job.status === 'accepted' ? 'en_route' : 'arrived';
+    const nextStatus = NEXT_STATUS[job.status];
+    if (!nextStatus) return;
     setLoading(true);
     try {
       const res = await driverService.updateRequestStatus(job.id, nextStatus);
@@ -68,23 +81,25 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
 
   if (!job) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(13), color: colors.textSub }}>
-          Loading job…
-        </Text>
-      </View>
+      <ScreenShell>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(13), color: colors.textSub }}>
+            Loading job…
+          </Text>
+        </View>
+      </ScreenShell>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader
         title={job.customerName}
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
         horizontalPadding={20}
       />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(20), gap: moderateScale(16), paddingBottom: moderateScale(48) }}
+        contentContainerStyle={{ padding: moderateScale(20), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
       <Pressable
         onPress={() => navigation.navigate('RouteMap', { jobId: job.id })}
@@ -190,6 +205,6 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
         />
       )}
       </ScrollView>
-    </View>
+    </ScreenShell>
   );
 }

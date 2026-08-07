@@ -3,21 +3,24 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Card } from '../../components/common/Card';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 export function AboutUsScreen({ navigation }: RootStackScreenProps<'AboutUs'>) {
   const { colors } = useTheme();
+  const scrollBottomPadding = useScrollBottomPadding();
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader
         title="About Zubba Driver"
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: moderateScale(48) }}
+        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
       <View style={{ alignItems: 'center', gap: moderateScale(10) }}>
         <View
@@ -71,6 +74,6 @@ export function AboutUsScreen({ navigation }: RootStackScreenProps<'AboutUs'>) {
         <MaterialCommunityIcons name="chevron-right" size={moderateScale(20)} color={colors.textSub} />
       </Pressable>
       </ScrollView>
-    </View>
+    </ScreenShell>
   );
 }

@@ -30,10 +30,10 @@ export const driverService = {
     return data;
   },
 
-  submitBags: async (requestId: string, bags: number) => {
+  submitBags: async (requestId: string, bags: number, code: string) => {
     const { data } = await api.patch<ApiResponse<{ request: DriverRequestItem }>>(
       `/drivers/requests/${requestId}/bags`,
-      { bags },
+      { bags, code },
     );
     return data;
   },

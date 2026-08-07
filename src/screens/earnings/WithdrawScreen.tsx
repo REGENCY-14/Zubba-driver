@@ -6,7 +6,9 @@ import { Button } from '../../components/common/Button';
 import { FormField } from '../../components/common/FormField';
 import { PaymentRailBadge } from '../../components/common/PaymentRailBadge';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
 import { walletService } from '../../api/walletService';
 import type { RootStackScreenProps } from '../../navigation/types';
@@ -31,6 +33,7 @@ export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>)
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<{ reference: string; newBalanceGHS: number } | null>(null);
+  const scrollBottomPadding = useScrollBottomPadding();
 
   useEffect(() => {
     walletService
@@ -68,16 +71,16 @@ export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>)
 
   if (success) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: moderateScale(24),
-          gap: moderateScale(16),
-        }}
-      >
+      <ScreenShell>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: moderateScale(24),
+            gap: moderateScale(16),
+          }}
+        >
         <MaterialCommunityIcons name="clock-check-outline" size={moderateScale(64)} color={COLORS.brandGreen} />
         <Text
           style={{
@@ -103,15 +106,16 @@ export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>)
           New balance: GHS {success.newBalanceGHS.toFixed(2)}
         </Text>
         <Button label="Done" onPress={() => navigation.goBack()} />
-      </View>
+        </View>
+      </ScreenShell>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(18), paddingBottom: moderateScale(48) }}
+        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(18), paddingBottom: scrollBottomPadding }}
       >
       <View style={{ gap: moderateScale(4) }}>
         <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(22), color: colors.text }}>
@@ -181,6 +185,6 @@ export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>)
 
       <Button label="Confirm withdrawal" size="lg" onPress={handleSubmit} disabled={!canSubmit} loading={submitting} />
       </ScrollView>
-    </View>
+    </ScreenShell>
   );
 }

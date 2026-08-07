@@ -6,7 +6,9 @@ import { Button } from '../../components/common/Button';
 import { FormField } from '../../components/common/FormField';
 import { ImagePickerField } from '../../components/common/ImagePickerField';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { submitKyc } from '../../slices/driverProfile/driverProfileSlice';
 import { driverService } from '../../api/driverService';
 import { uploadKycDocument } from '../../services/kycUploadService';
@@ -39,6 +41,7 @@ export function VehicleDocumentsScreen({ navigation }: RootStackScreenProps<'Veh
   const [plateNumber, setPlateNumber] = useState(kyc?.plateNumber ?? '');
   const [vehiclePhoto, setVehiclePhoto] = useState<string | null>(kyc?.vehiclePhoto ?? null);
   const [saving, setSaving] = useState(false);
+  const scrollBottomPadding = useScrollBottomPadding();
 
   const canSave = Boolean(
     ghanaCardNumber.trim() && driversLicenseNumber.trim() && plateNumber.trim() && vehiclePhoto
@@ -94,13 +97,13 @@ export function VehicleDocumentsScreen({ navigation }: RootStackScreenProps<'Veh
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader
         title="Vehicle & documents"
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: moderateScale(48) }}
+        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
       <FormField
         label="Ghana Card number"
@@ -166,6 +169,6 @@ export function VehicleDocumentsScreen({ navigation }: RootStackScreenProps<'Veh
 
       <Button label="Save changes" size="lg" onPress={handleSave} disabled={!canSave} loading={saving} />
       </ScrollView>
-    </View>
+    </ScreenShell>
   );
 }

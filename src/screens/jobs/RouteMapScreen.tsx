@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { LiveMapView } from '../../components/maps/LiveMapView';
 import { formatDistance, formatEta } from '../../components/maps/mapUtils';
 import { useCurrentLocation } from '../../hooks/useCurrentLocation';
@@ -22,6 +23,7 @@ export function RouteMapScreen({ navigation, route }: RootStackScreenProps<'Rout
   const { colors } = useTheme();
   const [job, setJob] = useState<Job | null>(null);
   const { coords: driverCoords } = useCurrentLocation({ watch: true });
+  const driverCoordsRef = useRef(driverCoords);
 
   useEffect(() => {
     driverService
@@ -30,6 +32,25 @@ export function RouteMapScreen({ navigation, route }: RootStackScreenProps<'Rout
       .catch((err) => handleApiError(err));
   }, [jobId]);
 
+  // Keep the backend's `drivers.location` fresh while this screen is open so
+  // the customer's live tracking map reflects real movement instead of a
+  // frozen position -- the driver only otherwise reports location once, on
+  // going online (see HomeScreen's handleToggleOnline).
+  useEffect(() => {
+    driverCoordsRef.current = driverCoords;
+  }, [driverCoords]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const coords = driverCoordsRef.current;
+      if (!coords) return;
+      driverService
+        .updateMe({ latitude: coords.latitude, longitude: coords.longitude })
+        .catch(() => {});
+    }, 6000);
+    return () => clearInterval(interval);
+  }, []);
+
   const customerCoord = job?.pickupLocation ?? null;
   const routeInfo = useRoutePolyline(driverCoords, customerCoord);
 
@@ -37,7 +58,7 @@ export function RouteMapScreen({ navigation, route }: RootStackScreenProps<'Rout
   const etaLabel = routeInfo.durationSeconds != null ? formatEta(routeInfo.durationSeconds) : '—';
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <LiveMapView
         driverLocation={driverCoords}
         pickupLocation={customerCoord}
@@ -96,7 +117,7 @@ export function RouteMapScreen({ navigation, route }: RootStackScreenProps<'Rout
           </View>
         </Card>
       </View>
-    </View>
+    </ScreenShell>
   );
 }
 

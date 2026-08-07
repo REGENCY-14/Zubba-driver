@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { toast } from 'sonner-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
 import { requestNotificationPermissionOnly } from '../../services/pushNotifications';
@@ -31,14 +32,14 @@ export function OnboardNotificationsAccessScreen({
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: colors.bg,
-        padding: moderateScale(24),
-        justifyContent: 'space-between',
-      }}
-    >
+    <ScreenShell>
+      <View
+        style={{
+          flex: 1,
+          padding: moderateScale(24),
+          justifyContent: 'space-between',
+        }}
+      >
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: moderateScale(20) }}>
         <View
           style={{
@@ -77,6 +78,7 @@ export function OnboardNotificationsAccessScreen({
         />
         <Button label="Maybe later" variant="secondary" onPress={() => navigation.navigate('Welcome')} />
       </View>
-    </View>
+      </View>
+    </ScreenShell>
   );
 }

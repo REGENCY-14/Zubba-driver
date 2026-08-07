@@ -40,10 +40,9 @@ export const requestNotificationPermissionOnly = async () => {
   return status === 'granted';
 };
 
-// Best-effort: Zubba-driver's app.json has no EAS projectId configured yet, which
-// getExpoPushTokenAsync requires. This silently no-ops until one is added —
-// GET /drivers/requests?status=pending polling is the mechanism that actually
-// delivers incoming requests today.
+// Best-effort supplement for when the app is backgrounded — 4s polling of
+// GET /drivers/requests?status=pending remains the primary, guaranteed
+// mechanism for delivering incoming requests (see HomeScreen.tsx).
 export const syncPushNotifications = async () => {
   try {
     await ensureAndroidChannel();

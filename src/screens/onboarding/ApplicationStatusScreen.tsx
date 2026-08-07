@@ -2,6 +2,7 @@ import { Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import type { RootStackScreenProps } from '../../navigation/types';
 
@@ -12,16 +13,16 @@ export function ApplicationStatusScreen({ navigation }: RootStackScreenProps<'Ap
   const { colors } = useTheme();
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: colors.bg,
-        padding: moderateScale(24),
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: moderateScale(16),
-      }}
-    >
+    <ScreenShell>
+      <View
+        style={{
+          flex: 1,
+          padding: moderateScale(24),
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: moderateScale(16),
+        }}
+      >
       <MaterialCommunityIcons name="check-decagram" size={moderateScale(64)} color="#31973D" />
       <Text
         style={{
@@ -47,6 +48,7 @@ export function ApplicationStatusScreen({ navigation }: RootStackScreenProps<'Ap
         label="Continue"
         onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
       />
-    </View>
+      </View>
+    </ScreenShell>
   );
 }

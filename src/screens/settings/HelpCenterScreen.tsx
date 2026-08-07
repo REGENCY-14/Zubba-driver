@@ -5,7 +5,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { getFaqs, Faq } from '../../services/mock/supportMock';
 import type { RootStackScreenProps } from '../../navigation/types';
 
@@ -13,19 +15,20 @@ export function HelpCenterScreen({ navigation }: RootStackScreenProps<'HelpCente
   const { colors } = useTheme();
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const scrollBottomPadding = useScrollBottomPadding();
 
   useEffect(() => {
     getFaqs().then(setFaqs);
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader
         title="Help & support"
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: moderateScale(48) }}
+        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
       {faqs.map(faq => {
         const expanded = expandedId === faq.id;
@@ -75,6 +78,6 @@ export function HelpCenterScreen({ navigation }: RootStackScreenProps<'HelpCente
 
       <Button label="Report an issue" variant="secondary" onPress={() => navigation.navigate('ReportIssue')} />
       </ScrollView>
-    </View>
+    </ScreenShell>
   );
 }

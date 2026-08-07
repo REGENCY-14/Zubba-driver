@@ -8,7 +8,9 @@ import { Card } from '../../components/common/Card';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AppBottomNav } from '../../components/AppBottomNav';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
 import { setOnline } from '../../slices/driverStatus/driverStatusSlice';
 import { toggleSidebar } from '../../slices/ui/uiSlice';
@@ -162,12 +164,13 @@ export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
     ? (`${user.firstname?.[0] ?? ''}${user.lastname?.[0] ?? ''}`.toUpperCase() || 'ZB')
     : 'ZB';
   const firstName = user?.firstname || 'Driver';
+  const scrollBottomPadding = useScrollBottomPadding({ withBottomNav: true });
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell edges={['top', 'left', 'right']}>
       <ScreenHeader onMenuPress={() => dispatch(toggleSidebar())} horizontalPadding={20} />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(20), gap: moderateScale(16), paddingBottom: moderateScale(140) }}
+        contentContainerStyle={{ padding: moderateScale(20), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>
@@ -292,6 +295,6 @@ export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
       />
 
       <AppBottomNav activeTab="home" navigation={navigation} />
-    </View>
+    </ScreenShell>
   );
 }

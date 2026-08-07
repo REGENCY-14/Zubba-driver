@@ -5,7 +5,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { acceptTerms, setApplicationStatus } from '../../slices/driverProfile/driverProfileSlice';
 import { updateUser as updateAuthUser } from '../../slices/auth/authSlice';
 import { userService } from '../../api/userService';
@@ -24,6 +26,7 @@ export function TermsScreen({ navigation }: RootStackScreenProps<'Terms'>) {
   const user = useSelector((state: RootState) => state.auth.user);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const scrollBottomPadding = useScrollBottomPadding();
 
   const handleAccept = async () => {
     if (!user || !kyc) return;
@@ -69,13 +72,13 @@ export function TermsScreen({ navigation }: RootStackScreenProps<'Terms'>) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader
         title="Driver terms"
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
       <View style={{ flex: 1, padding: moderateScale(24), gap: moderateScale(16) }}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: moderateScale(16) }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: scrollBottomPadding }}>
         <Text
           style={{
             fontFamily: 'Poppins_400Regular',
@@ -116,6 +119,6 @@ export function TermsScreen({ navigation }: RootStackScreenProps<'Terms'>) {
 
       <Button label="Accept & submit application" onPress={handleAccept} disabled={!agreed} loading={loading} />
       </View>
-    </View>
+    </ScreenShell>
   );
 }

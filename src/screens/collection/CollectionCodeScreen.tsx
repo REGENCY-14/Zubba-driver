@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import axios from 'axios';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
-import { FormField } from '../../components/common/FormField';
 import { OTPInput } from '../../components/common/OTPInput';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
 import { driverService } from '../../api/driverService';
@@ -14,21 +15,26 @@ import { toJob, Job } from '../../utils/jobMapping';
 import { handleApiError } from '../../utils/handleApiError';
 import type { RootStackScreenProps } from '../../navigation/types';
 
-type Step = 'code' | 'logging' | 'success';
+type Step = 'code' | 'logging' | 'waiting' | 'success';
 
 interface PickupLogResult {
   bags: number;
-  weightKg: number;
   amountEarned: number;
 }
 
 const MIN_BAGS = 1;
 const MAX_BAGS = 20;
 
+// Same poll cadence as HomeScreen.tsx's incoming-request poll, for consistency.
+const POLL_INTERVAL_MS = 4000;
+
 // Collection-code handshake: the 4-digit code is generated server-side at
 // request creation (requests.collection_code) and shown to the customer in
-// their app — verified here client-side against the value already fetched
-// with the job, no separate "verify" endpoint exists or is needed.
+// their app. It's compared client-side first for immediate feedback, but the
+// server is the real source of truth — it re-validates the code against
+// requests.collection_code when bags are submitted and can reject it (400
+// "Incorrect collection code") even if the client-side check passed, since
+// the code is spoofable in the request payload.
 export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps<'CollectionCode'>) {
   const { jobId } = route.params;
   const { colors } = useTheme();
@@ -37,12 +43,13 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
   const [step, setStep] = useState<Step>('code');
 
   const [digits, setDigits] = useState<string[]>(['', '', '', '']);
+  const [enteredCode, setEnteredCode] = useState<string | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
 
   const [bags, setBags] = useState(MIN_BAGS);
-  const [weightKg, setWeightKg] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [result, setResult] = useState<PickupLogResult | null>(null);
 
   useEffect(() => {
@@ -61,54 +68,102 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
       setDigits(['', '', '', '']);
       return;
     }
+    setEnteredCode(code);
     setStep('logging');
   };
 
-  const parsedWeight = parseFloat(weightKg);
-  const canSubmitLog = weightKg.length > 0 && !Number.isNaN(parsedWeight) && parsedWeight > 0;
-
   const handleSubmitLog = async () => {
-    if (!canSubmitLog || !job) return;
+    if (!job || !enteredCode) return;
     setSubmitting(true);
     try {
-      await driverService.submitBags(job.id, bags);
+      const res = await driverService.submitBags(job.id, bags, enteredCode);
+      setJob(toJob(res.data.request));
+      setStep('waiting');
+    } catch (err) {
+      const message = axios.isAxiosError(err)
+        ? (err.response?.data as any)?.error?.message
+        : undefined;
+      if (message === 'Incorrect collection code') {
+        // The server is the real source of truth on the code — send the
+        // driver back to re-enter it rather than trusting the client-side
+        // check that already passed.
+        setCodeError('Incorrect code. Ask the customer to confirm it and try again.');
+        setDigits(['', '', '', '']);
+        setEnteredCode(null);
+        setStep('code');
+      } else {
+        handleApiError(err);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Bags are logged but the request stays "arrived" until the customer pays
+  // (backend sets it to "paid" independently). Poll for that transition so
+  // "Confirm Collection" can appear without a manual refresh.
+  useEffect(() => {
+    if (step !== 'waiting' || !job) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const res = await driverService.getRequestById(job.id);
+        if (cancelled) return;
+        setJob(toJob(res.data));
+      } catch {
+        // transient network error — try again next tick
+      }
+    };
+    poll();
+    const interval = setInterval(poll, POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [step, job?.id]);
+
+  const handleConfirmCollection = async () => {
+    if (!job) return;
+    setConfirming(true);
+    try {
       const res = await driverService.updateRequestStatus(job.id, 'completed');
       const completed = toJob(res.data.request);
       setResult({
         bags,
-        weightKg: parsedWeight,
         amountEarned: completed.amountEarned ?? completed.estimatedPay,
       });
       setStep('success');
     } catch (err) {
       handleApiError(err);
     } finally {
-      setSubmitting(false);
+      setConfirming(false);
     }
   };
 
   if (!job) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(13), color: colors.textSub }}>
-          Loading…
-        </Text>
-      </View>
+      <ScreenShell>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(13), color: colors.textSub }}>
+            Loading…
+          </Text>
+        </View>
+      </ScreenShell>
     );
   }
 
   if (step === 'success' && result) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: moderateScale(24),
-          gap: moderateScale(16),
-        }}
-      >
+      <ScreenShell>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: moderateScale(24),
+            gap: moderateScale(16),
+          }}
+        >
         <MaterialCommunityIcons name="check-decagram" size={moderateScale(64)} color={COLORS.brandGreen} />
         <Text
           style={{
@@ -128,7 +183,7 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
             textAlign: 'center',
           }}
         >
-          {result.bags} bag{result.bags !== 1 ? 's' : ''} • {result.weightKg} kg logged
+          {result.bags} bag{result.bags !== 1 ? 's' : ''} logged
         </Text>
         <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(24), color: COLORS.brandGreen }}>
           + GHS {result.amountEarned.toFixed(2)}
@@ -137,13 +192,67 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
           label="Back to Jobs"
           onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Jobs' }] })}
         />
-      </View>
+        </View>
+      </ScreenShell>
+    );
+  }
+
+  if (step === 'waiting') {
+    const isPaid = job.status === 'paid';
+    return (
+      <ScreenShell>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: moderateScale(24),
+            gap: moderateScale(16),
+          }}
+        >
+          <MaterialCommunityIcons
+            name={isPaid ? 'cash-check' : 'clock-outline'}
+            size={moderateScale(64)}
+            color={isPaid ? COLORS.brandGreen : colors.textSub}
+          />
+          <Text
+            style={{
+              fontFamily: 'Poppins_700Bold',
+              fontSize: moderateScale(20),
+              color: colors.text,
+              textAlign: 'center',
+            }}
+          >
+            {isPaid ? 'Payment received' : 'Bags logged'}
+          </Text>
+          <Text
+            style={{
+              fontFamily: 'Poppins_400Regular',
+              fontSize: moderateScale(13),
+              color: colors.textSub,
+              textAlign: 'center',
+            }}
+          >
+            {isPaid
+              ? `Confirm you've handed over the collection to finish this pickup.`
+              : `Waiting for ${job.customerName} to pay for the pickup.`}
+          </Text>
+          {isPaid && (
+            <Button
+              label="Confirm Collection"
+              size="lg"
+              onPress={handleConfirmCollection}
+              loading={confirming}
+            />
+          )}
+        </View>
+      </ScreenShell>
     );
   }
 
   if (step === 'logging') {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <ScreenShell>
         <ScreenHeader onBack={() => setStep('code')} />
         <View style={{ flex: 1, padding: moderateScale(24), gap: moderateScale(20) }}>
         <View style={{ gap: moderateScale(4) }}>
@@ -212,22 +321,14 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
           </View>
         </Card>
 
-        <FormField
-          label="Total weight (kg)"
-          value={weightKg}
-          onChangeText={setWeightKg}
-          keyboardType="decimal-pad"
-          placeholder="e.g. 6.5"
-        />
-
-        <Button label="Submit log" size="lg" onPress={handleSubmitLog} disabled={!canSubmitLog} loading={submitting} />
+        <Button label="Submit log" size="lg" onPress={handleSubmitLog} loading={submitting} />
         </View>
-      </View>
+      </ScreenShell>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} />
       <View style={{ flex: 1, padding: moderateScale(24), gap: moderateScale(20) }}>
         <View style={{ gap: moderateScale(4) }}>
@@ -260,6 +361,6 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
           </Text>
         ) : null}
       </View>
-    </View>
+    </ScreenShell>
   );
 }

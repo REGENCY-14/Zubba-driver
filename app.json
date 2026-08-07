@@ -29,13 +29,18 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/ic_launcher.png",
+          "image": "./assets/zubba-icon.png",
           "imageWidth": 220,
           "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF"
+          "backgroundColor": "#2EA043"
         }
       ],
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cf088b54-0a40-4a5c-a1ce-5924ddd1c386"
+      }
+    }
   }
 }

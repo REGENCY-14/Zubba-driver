@@ -6,7 +6,9 @@ import { AppBottomNav } from '../../components/AppBottomNav';
 import { StatusPill, StatusKind } from '../../components/common/StatusPill';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
 import { driverService } from '../../api/driverService';
 import { toJob, Job, JobStatus } from '../../utils/jobMapping';
@@ -84,8 +86,10 @@ export function JobsScreen({ navigation }: RootStackScreenProps<'Jobs'>) {
     load(activeTab);
   }, [activeTab, load]);
 
+  const scrollBottomPadding = useScrollBottomPadding({ withBottomNav: true });
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell edges={['top', 'left', 'right']}>
       <ScreenHeader title="Jobs" onMenuPress={() => dispatch(toggleSidebar())} horizontalPadding={20} />
       <View style={{ paddingHorizontal: moderateScale(20), paddingTop: moderateScale(4) }}>
         <View style={{ flexDirection: 'row', gap: moderateScale(8) }}>
@@ -126,7 +130,7 @@ export function JobsScreen({ navigation }: RootStackScreenProps<'Jobs'>) {
       <SectionList
         sections={[{ title: null as string | null, data: jobs }]}
         keyExtractor={item => item.id}
-        contentContainerStyle={{ padding: moderateScale(20), paddingBottom: moderateScale(140), flexGrow: 1 }}
+        contentContainerStyle={{ padding: moderateScale(20), paddingBottom: scrollBottomPadding, flexGrow: 1 }}
         ListEmptyComponent={
           loading ? (
             <Text
@@ -191,6 +195,6 @@ export function JobsScreen({ navigation }: RootStackScreenProps<'Jobs'>) {
       />
 
       <AppBottomNav activeTab="jobs" navigation={navigation} />
-    </View>
+    </ScreenShell>
   );
 }

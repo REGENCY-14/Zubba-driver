@@ -1,7 +1,9 @@
 import { ScrollView, Text, View } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { DRIVER_TERMS_TEXT } from '../../constants/legalText';
 import type { RootStackScreenProps } from '../../navigation/types';
 
@@ -10,14 +12,15 @@ import type { RootStackScreenProps } from '../../navigation/types';
 // src/constants/legalText.ts, the shared source for both.
 export function LegalScreen({ navigation }: RootStackScreenProps<'Legal'>) {
   const { colors } = useTheme();
+  const scrollBottomPadding = useScrollBottomPadding();
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader
         title="Legal"
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: moderateScale(48) }}
+        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
         <Text
           style={{
@@ -30,6 +33,6 @@ export function LegalScreen({ navigation }: RootStackScreenProps<'Legal'>) {
           {DRIVER_TERMS_TEXT}
         </Text>
       </ScrollView>
-    </View>
+    </ScreenShell>
   );
 }

@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { FormField } from '../../components/common/FormField';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { authService } from '../../api/authService';
 import { handleApiError } from '../../utils/handleApiError';
@@ -34,7 +35,7 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader onBack={() => navigation.goBack()} />
       <View style={{ flex: 1, padding: moderateScale(24), gap: moderateScale(20) }}>
         <View style={{ gap: moderateScale(4) }}>
@@ -62,6 +63,6 @@ export function SignInScreen({ navigation }: RootStackScreenProps<'SignIn'>) {
           onPress={() => navigation.navigate('SignUp')}
         />
       </View>
-    </View>
+    </ScreenShell>
   );
 }

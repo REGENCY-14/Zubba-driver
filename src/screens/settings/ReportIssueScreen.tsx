@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { FormField } from '../../components/common/FormField';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
 import { submitIssueReport, IssueCategory } from '../../services/mock/supportMock';
@@ -34,16 +35,16 @@ export function ReportIssueScreen({ navigation }: RootStackScreenProps<'ReportIs
 
   if (ticketRef) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: moderateScale(24),
-          gap: moderateScale(16),
-        }}
-      >
+      <ScreenShell>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: moderateScale(24),
+            gap: moderateScale(16),
+          }}
+        >
         <MaterialCommunityIcons name="check-decagram" size={moderateScale(56)} color={COLORS.brandGreen} />
         <Text
           style={{
@@ -66,12 +67,13 @@ export function ReportIssueScreen({ navigation }: RootStackScreenProps<'ReportIs
           Ticket {ticketRef}. Our support team will follow up if needed.
         </Text>
         <Button label="Done" onPress={() => navigation.goBack()} />
-      </View>
+        </View>
+      </ScreenShell>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader
         title="Report an issue"
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
@@ -134,6 +136,6 @@ export function ReportIssueScreen({ navigation }: RootStackScreenProps<'ReportIs
         loading={submitting}
       />
       </View>
-    </View>
+    </ScreenShell>
   );
 }

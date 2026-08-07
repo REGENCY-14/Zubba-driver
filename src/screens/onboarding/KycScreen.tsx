@@ -6,7 +6,9 @@ import { Button } from '../../components/common/Button';
 import { FormField } from '../../components/common/FormField';
 import { ImagePickerField } from '../../components/common/ImagePickerField';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { submitKyc as submitKycAction } from '../../slices/driverProfile/driverProfileSlice';
 import { updateUser } from '../../slices/auth/authSlice';
 import { saveAuthUser } from '../../utils/authStorage';
@@ -37,6 +39,7 @@ export function KycScreen({ navigation }: RootStackScreenProps<'Kyc'>) {
   const [plateNumber, setPlateNumber] = useState('');
   const [vehiclePhoto, setVehiclePhoto] = useState<string | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const scrollBottomPadding = useScrollBottomPadding();
 
   const canContinue = Boolean(
     firstname.trim() &&
@@ -69,10 +72,10 @@ export function KycScreen({ navigation }: RootStackScreenProps<'Kyc'>) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: moderateScale(48) }}
+        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
       <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(22), color: colors.text }}>
         Driver verification
@@ -155,6 +158,6 @@ export function KycScreen({ navigation }: RootStackScreenProps<'Kyc'>) {
 
       <Button label="Continue" onPress={handleContinue} disabled={!canContinue} />
       </ScrollView>
-    </View>
+    </ScreenShell>
   );
 }

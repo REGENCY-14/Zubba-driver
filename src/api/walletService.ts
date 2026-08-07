@@ -14,6 +14,20 @@ export const walletService = {
     });
     return data;
   },
+  initiateDeposit: async (payload: {
+    amount: number;
+    phone: string;
+    provider?: string;
+    email?: string;
+    clientInitiated?: boolean;
+    payment_method?: 'mobile_money' | 'card';
+  }) => {
+    const { data } = await api.post<ApiResponse<{ reference: string }>>(
+      '/wallet/deposit/initiate',
+      payload,
+    );
+    return data;
+  },
   withdraw: async (payload: { amount: number; phone: string; provider?: string; name?: string }) => {
     const { data } = await api.post<ApiResponse<{ reference: string; transfer?: unknown }>>(
       '/wallet/withdraw',

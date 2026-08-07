@@ -4,7 +4,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Card } from '../../components/common/Card';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
 import { notificationService } from '../../api/notificationService';
 import { handleApiError } from '../../utils/handleApiError';
@@ -30,6 +32,7 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
   const { colors } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
+  const scrollBottomPadding = useScrollBottomPadding();
 
   useEffect(() => {
     notificationService
@@ -63,13 +66,13 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader
         title="Notifications"
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: moderateScale(48) }}
+        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
       <Card>
         <View style={{ gap: moderateScale(14) }}>
@@ -156,6 +159,6 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
         );
       })}
       </ScrollView>
-    </View>
+    </ScreenShell>
   );
 }

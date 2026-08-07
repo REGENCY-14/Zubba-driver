@@ -5,7 +5,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { AppBottomNav } from '../../components/AppBottomNav';
 import { Card } from '../../components/common/Card';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
 import { logout } from '../../slices/auth/authSlice';
 import { clearStoredAuth } from '../../utils/authStorage';
@@ -67,11 +69,13 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
     },
   ];
 
+  const scrollBottomPadding = useScrollBottomPadding({ withBottomNav: true });
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell edges={['top', 'left', 'right']}>
       <ScreenHeader title="Settings" onMenuPress={() => dispatch(toggleSidebar())} horizontalPadding={20} />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(20), gap: moderateScale(16), paddingBottom: moderateScale(140) }}
+        contentContainerStyle={{ padding: moderateScale(20), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
         <Pressable onPress={() => navigation.navigate('Profile')} accessibilityRole="button">
           <Card>
@@ -172,6 +176,6 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
       </ScrollView>
 
       <AppBottomNav activeTab="settings" navigation={navigation} />
-    </View>
+    </ScreenShell>
   );
 }

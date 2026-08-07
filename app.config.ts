@@ -5,6 +5,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "Zubba Driver",
   slug: "zubba-driver",
+  owner: "andyaa",
   scheme: "com.zubba.driver",
   version: "1.0.0",
   orientation: "portrait",
@@ -30,10 +31,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-splash-screen",
       {
-        image: "./assets/ic_launcher.png",
+        image: "./assets/zubba-icon.png",
         imageWidth: 220,
         resizeMode: "contain",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#2EA043",
       },
     ],
     "expo-status-bar",
@@ -44,13 +45,24 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         iosGoogleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
       },
     ],
+    [
+      "expo-notifications",
+      {
+        icon: "./assets/ic_launcher.png",
+        color: "#2EA043",
+      },
+    ],
   ],
   extra: {
+    eas: {
+      projectId: "cf088b54-0a40-4a5c-a1ce-5924ddd1c386",
+    },
     apiUrl: process.env.EXPO_PUBLIC_API_URL,
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     supabaseDriverDocsBucket: process.env.EXPO_PUBLIC_SUPABASE_DRIVER_DOCS_BUCKET,
     googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
     maptilerKey: process.env.EXPO_PUBLIC_MAPTILER_KEY,
+    paystackPublicKey: process.env.EXPO_PUBLIC_PAYSTACK_PUBLIC_KEY,
   },
 });

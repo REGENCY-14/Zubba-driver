@@ -6,7 +6,9 @@ import { Button } from '../../components/common/Button';
 import { FormField } from '../../components/common/FormField';
 import { ImagePickerField } from '../../components/common/ImagePickerField';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { updateUser } from '../../slices/auth/authSlice';
 import { saveAuthUser } from '../../utils/authStorage';
 import { userService } from '../../api/userService';
@@ -25,6 +27,7 @@ export function ProfileScreen({ navigation }: RootStackScreenProps<'Profile'>) {
   const [lastname, setLastname] = useState(user?.lastname ?? '');
   const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.profile_picture ?? null);
   const [saving, setSaving] = useState(false);
+  const scrollBottomPadding = useScrollBottomPadding();
 
   const handleSave = async () => {
     if (!user) return;
@@ -51,13 +54,13 @@ export function ProfileScreen({ navigation }: RootStackScreenProps<'Profile'>) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader
         title="Edit profile"
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(18), paddingBottom: moderateScale(48) }}
+        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(18), paddingBottom: scrollBottomPadding }}
       >
         <ImagePickerField label="Profile photo" value={profilePhoto} onChange={setProfilePhoto} />
         <FormField label="First name" value={firstname} onChangeText={setFirstname} />
@@ -83,6 +86,6 @@ export function ProfileScreen({ navigation }: RootStackScreenProps<'Profile'>) {
           />
         </View>
       </ScrollView>
-    </View>
+    </ScreenShell>
   );
 }

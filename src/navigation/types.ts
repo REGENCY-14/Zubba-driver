@@ -16,7 +16,13 @@ export type RootStackParamList = {
   JobDetail: { jobId: string };
   RouteMap: { jobId: string };
   CollectionCode: { jobId: string };
-  Earnings: undefined;
+  Earnings: { credited?: boolean } | undefined;
+  DepositMethod: undefined;
+  CreditAccount: {
+    provider: string;
+    methodLabel: string;
+    channel: 'mobile_money' | 'card';
+  };
   Withdraw: undefined;
   Settings: undefined;
   Profile: undefined;

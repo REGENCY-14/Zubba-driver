@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useDispatch } from 'react-redux';
+import { toast } from 'sonner-native';
 import { useTheme } from '../../context/ThemeContext';
 import { AppBottomNav } from '../../components/AppBottomNav';
 import { Card } from '../../components/common/Card';
 import { EmptyState } from '../../components/common/EmptyState';
 import { Button } from '../../components/common/Button';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
 import { driverService } from '../../api/driverService';
 import { walletService } from '../../api/walletService';
@@ -35,7 +38,7 @@ function isWithinPeriod(dateIso: string, period: EarningsPeriod): boolean {
   return period === 'week' ? diffDays >= 0 && diffDays <= 7 : diffDays >= 0 && diffDays <= 30;
 }
 
-export function EarningsScreen({ navigation }: RootStackScreenProps<'Earnings'>) {
+export function EarningsScreen({ navigation, route }: RootStackScreenProps<'Earnings'>) {
   const { colors } = useTheme();
   const dispatch = useDispatch();
   const [period, setPeriod] = useState<EarningsPeriod>('week');
@@ -69,14 +72,26 @@ export function EarningsScreen({ navigation }: RootStackScreenProps<'Earnings'>)
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (route.params?.credited) {
+      toast.success('Wallet topped up successfully');
+      walletService
+        .getWallet()
+        .then((res) => setBalance({ availableGHS: res.data.wallet.available_balance }))
+        .catch(() => {});
+      navigation.setParams({ credited: undefined });
+    }
+  }, [navigation, route.params?.credited]);
+
   const totalGHS = jobs.reduce((sum, j) => sum + (j.amountEarned ?? 0), 0);
   const bagsCollected = jobs.reduce((sum, j) => sum + (j.bags ?? 0), 0);
+  const scrollBottomPadding = useScrollBottomPadding({ withBottomNav: true });
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell edges={['top', 'left', 'right']}>
       <ScreenHeader title="Earnings" onMenuPress={() => dispatch(toggleSidebar())} horizontalPadding={20} />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(20), gap: moderateScale(16), paddingBottom: moderateScale(140) }}
+        contentContainerStyle={{ padding: moderateScale(20), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
         <Card>
           <View style={{ gap: moderateScale(14) }}>
@@ -89,7 +104,19 @@ export function EarningsScreen({ navigation }: RootStackScreenProps<'Earnings'>)
               </Text>
             </View>
             {/* No fixed width — a longer translated "Withdraw" label sizes the button, not the reverse. */}
-            <Button label="Withdraw" onPress={() => navigation.navigate('Withdraw')} disabled={!balance} />
+            <View style={{ flexDirection: 'row', gap: moderateScale(10) }}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  label="Top up"
+                  variant="secondary"
+                  onPress={() => navigation.navigate('DepositMethod')}
+                  disabled={!balance}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Button label="Withdraw" onPress={() => navigation.navigate('Withdraw')} disabled={!balance} />
+              </View>
+            </View>
           </View>
         </Card>
 
@@ -207,6 +234,6 @@ export function EarningsScreen({ navigation }: RootStackScreenProps<'Earnings'>)
       </ScrollView>
 
       <AppBottomNav activeTab="earnings" navigation={navigation} />
-    </View>
+    </ScreenShell>
   );
 }

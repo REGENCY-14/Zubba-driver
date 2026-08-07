@@ -5,7 +5,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Card } from '../../components/common/Card';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { ratingService, DriverRatingItem, DriverRatingSummary } from '../../api/ratingService';
 import { handleApiError } from '../../utils/handleApiError';
 import type { RootState } from '../../store';
@@ -50,6 +52,7 @@ export function RatingsScreen({ navigation }: RootStackScreenProps<'Ratings'>) {
   const user = useSelector((state: RootState) => state.auth.user);
   const [summary, setSummary] = useState<DriverRatingSummary | null>(null);
   const [feedback, setFeedback] = useState<DriverRatingItem[]>([]);
+  const scrollBottomPadding = useScrollBottomPadding();
 
   useEffect(() => {
     if (!user) return;
@@ -63,13 +66,13 @@ export function RatingsScreen({ navigation }: RootStackScreenProps<'Ratings'>) {
   }, [user]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader
         title="Ratings & performance"
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
       <ScrollView
-        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: moderateScale(48) }}
+        contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
       <Card>
         {summary ? (
@@ -127,6 +130,6 @@ export function RatingsScreen({ navigation }: RootStackScreenProps<'Ratings'>) {
         </View>
       ))}
       </ScrollView>
-    </View>
+    </ScreenShell>
   );
 }

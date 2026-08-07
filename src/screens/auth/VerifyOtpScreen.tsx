@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { OTPInput } from '../../components/common/OTPInput';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { authService } from '../../api/authService';
 import { setCredentials } from '../../slices/auth/authSlice';
@@ -71,7 +72,7 @@ export function VerifyOtpScreen({ navigation, route }: RootStackScreenProps<'Ver
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <ScreenShell>
       <ScreenHeader onBack={() => navigation.goBack()} />
       <View style={{ flex: 1, padding: moderateScale(24), gap: moderateScale(20) }}>
         <View style={{ gap: moderateScale(4) }}>
@@ -111,6 +112,6 @@ export function VerifyOtpScreen({ navigation, route }: RootStackScreenProps<'Ver
           onPress={handleResend}
         />
       </View>
-    </View>
+    </ScreenShell>
   );
 }

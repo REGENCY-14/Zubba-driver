@@ -1,8 +1,15 @@
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 
+import { authService } from '../api/authService';
 import { userService } from '../api/userService';
-import { loadStoredAuth, clearStoredAuth, saveAuthUser } from './authStorage';
+import {
+  loadStoredAuth,
+  clearStoredAuth,
+  saveAuthUser,
+  saveAuthTokens,
+  isSessionValid,
+} from './authStorage';
 import { store } from '../store';
 import { setCredentials, logout } from '../slices/auth/authSlice';
 
@@ -12,30 +19,6 @@ export type InitialRoute =
   | 'Welcome'
   | 'OnboardLocationAccess'
   | 'OnboardNotificationsAccess';
-
-async function resolveAuthenticatedRoute(): Promise<InitialRoute> {
-  try {
-    const res = await userService.getMe();
-    if (res.success) {
-      store.dispatch(
-        setCredentials({
-          user: res.data.user,
-          accessToken: store.getState().auth.accessToken!,
-          refreshToken: store.getState().auth.refreshToken!,
-        }),
-      );
-      await saveAuthUser(res.data.user);
-      return res.data.user.terms_accepted_at ? 'Home' : 'Kyc';
-    }
-  } catch {
-    // Token invalid and refresh (handled transparently by the axios
-    // interceptor) also failed — fall through to a clean logged-out state.
-  }
-
-  await clearStoredAuth();
-  store.dispatch(logout());
-  return 'Welcome';
-}
 
 async function resolveUnauthenticatedRoute(): Promise<InitialRoute> {
   const location = await Location.getForegroundPermissionsAsync();
@@ -51,14 +34,63 @@ async function resolveUnauthenticatedRoute(): Promise<InitialRoute> {
   return 'Welcome';
 }
 
+async function resolveAuthenticatedRoute(
+  stored: NonNullable<Awaited<ReturnType<typeof loadStoredAuth>>>,
+): Promise<InitialRoute> {
+  const { tokens } = stored;
+  let accessToken = tokens.accessToken;
+
+  try {
+    const res = await userService.getMe();
+    if (res.success) {
+      store.dispatch(
+        setCredentials({
+          user: res.data.user,
+          accessToken,
+          refreshToken: tokens.refreshToken,
+        }),
+      );
+      await saveAuthUser(res.data.user);
+      return res.data.user.terms_accepted_at ? 'Home' : 'Kyc';
+    }
+  } catch {
+    try {
+      const refreshed = await authService.refreshToken({
+        refreshToken: tokens.refreshToken,
+      });
+      accessToken = refreshed.data.accessToken;
+      await saveAuthTokens({
+        accessToken,
+        refreshToken: tokens.refreshToken,
+        lastAuthenticatedAt: tokens.lastAuthenticatedAt,
+      });
+
+      const res = await userService.getMe();
+      if (res.success) {
+        store.dispatch(
+          setCredentials({
+            user: res.data.user,
+            accessToken,
+            refreshToken: tokens.refreshToken,
+          }),
+        );
+        await saveAuthUser(res.data.user);
+        return res.data.user.terms_accepted_at ? 'Home' : 'Kyc';
+      }
+    } catch {
+      // Token invalid and refresh also failed — fall through to logged-out state.
+    }
+  }
+
+  await clearStoredAuth();
+  store.dispatch(logout());
+  return resolveUnauthenticatedRoute();
+}
+
 export async function resolveInitialRoute(): Promise<InitialRoute> {
   const stored = await loadStoredAuth();
 
-  if (stored) {
-    // Populate Redux with the stored tokens first so the axios interceptor
-    // can attach them (and transparently refresh the access token if it's
-    // expired) on the getMe() call below — this is what lets a returning
-    // driver skip signing in again.
+  if (stored && isSessionValid(stored.tokens)) {
     store.dispatch(
       setCredentials({
         user: stored.user,
@@ -66,7 +98,12 @@ export async function resolveInitialRoute(): Promise<InitialRoute> {
         refreshToken: stored.tokens.refreshToken,
       }),
     );
-    return resolveAuthenticatedRoute();
+    return resolveAuthenticatedRoute(stored);
+  }
+
+  if (stored) {
+    await clearStoredAuth();
+    store.dispatch(logout());
   }
 
   return resolveUnauthenticatedRoute();

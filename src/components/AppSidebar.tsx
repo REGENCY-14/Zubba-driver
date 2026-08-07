@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { NavigationContainerRefWithCurrent } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { moderateScale, scale } from '../utils/scale';
 import { COLORS } from '../constants/colors';
@@ -48,6 +49,7 @@ const MORE_ITEMS: SidebarItem[] = [
 
 export function AppSidebar({ navigationRef }: AppSidebarProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const isOpen = useSelector((state: RootState) => state.ui.isSidebarOpen);
   const user = useSelector((state: RootState) => state.auth.user);
@@ -116,7 +118,12 @@ export function AppSidebar({ navigationRef }: AppSidebarProps) {
           panelStyle,
         ]}
       >
-        <ScrollView contentContainerStyle={{ paddingTop: moderateScale(56), paddingBottom: moderateScale(24) }}>
+        <ScrollView
+          contentContainerStyle={{
+            paddingTop: insets.top + moderateScale(16),
+            paddingBottom: insets.bottom + moderateScale(24),
+          }}
+        >
           <View
             style={{
               paddingHorizontal: moderateScale(20),

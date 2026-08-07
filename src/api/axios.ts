@@ -2,7 +2,7 @@ import axios from 'axios';
 import { store } from '../store';
 import { logout, updateAccessToken } from '../slices/auth/authSlice';
 import { env } from '../utils/env';
-import { saveAuthTokens, clearStoredAuth } from '../utils/authStorage';
+import { saveAuthTokens, clearStoredAuth, loadStoredAuth } from '../utils/authStorage';
 import { ApiResponse } from '../types/api.types';
 
 export const api = axios.create({
@@ -43,7 +43,12 @@ api.interceptors.response.use(
         .then(async (res) => {
           const accessToken = res.data.data.accessToken;
           store.dispatch(updateAccessToken(accessToken));
-          await saveAuthTokens({ accessToken, refreshToken });
+          const stored = await loadStoredAuth();
+          await saveAuthTokens({
+            accessToken,
+            refreshToken,
+            lastAuthenticatedAt: stored?.tokens.lastAuthenticatedAt,
+          });
           return accessToken;
         })
         .catch(async () => {
