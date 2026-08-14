@@ -1,18 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, Switch, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Card } from '../../components/common/Card';
-import { EmptyState } from '../../components/common/EmptyState';
 import { AppBottomNav } from '../../components/AppBottomNav';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
-import { setOnline } from '../../slices/driverStatus/driverStatusSlice';
 import { toggleSidebar } from '../../slices/ui/uiSlice';
 import { driverService } from '../../api/driverService';
 import { handleApiError } from '../../utils/handleApiError';
@@ -48,7 +45,6 @@ export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
   const { colors } = useTheme();
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
-  const { isOnline } = useSelector((state: RootState) => state.driverStatus);
 
   const [earnings, setEarnings] = useState<TodayEarningsSummary | null>(null);
   const [incomingRequest, setIncomingRequest] = useState<DriverRequestItem | null>(null);
@@ -82,37 +78,10 @@ export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
     loadTodayEarnings();
   }, [loadTodayEarnings]);
 
-  const handleToggleOnline = async (next: boolean) => {
-    dispatch(setOnline(next));
-    if (!next) {
-      setIncomingRequest(null);
-      driverService.updateMe({ is_available: false }).catch(() => {});
-      return;
-    }
-
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        await driverService.updateMe({ is_available: true });
-        return;
-      }
-      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      await driverService.updateMe({
-        is_available: true,
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      });
-    } catch (err) {
-      handleApiError(err);
-    }
-  };
-
+  // Drivers are always available while logged in (see useDriverPresence).
   // Polling is the real "incoming request" mechanism — push notifications
-  // (syncPushNotifications above) are a best-effort supplement for when the app
-  // is backgrounded, not the primary delivery path.
+  // are a best-effort supplement when the app is backgrounded.
   useEffect(() => {
-    if (!isOnline) return;
-
     let cancelled = false;
     const poll = async () => {
       if (respondingRef.current) return;
@@ -140,7 +109,7 @@ export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [isOnline]);
+  }, []);
 
   const handleRespond = async (response: 'accept' | 'decline') => {
     if (!incomingRequest) return;
@@ -198,95 +167,73 @@ export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
         </View>
 
         <Card>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(10) }}>
-              <View
-                style={{
-                  width: moderateScale(10),
-                  height: moderateScale(10),
-                  borderRadius: moderateScale(5),
-                  backgroundColor: isOnline ? COLORS.brandGreen : colors.textMuted,
-                }}
-              />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(10) }}>
+            <View
+              style={{
+                width: moderateScale(10),
+                height: moderateScale(10),
+                borderRadius: moderateScale(5),
+                backgroundColor: COLORS.brandGreen,
+              }}
+            />
+            <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(15), color: colors.text }}>
-                {isOnline ? "You're online" : "You're offline"}
+                You're online
+              </Text>
+              <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: colors.textSub }}>
+                Sharing your location so nearby customers can find you.
               </Text>
             </View>
-            <Switch
-              value={isOnline}
-              onValueChange={handleToggleOnline}
-              trackColor={{ false: colors.border, true: COLORS.brandGreen }}
-              thumbColor="#FFFFFF"
-              accessibilityLabel={isOnline ? 'Go offline' : 'Go online'}
-            />
           </View>
         </Card>
 
-        {!isOnline ? (
-          <Card>
-            <EmptyState
-              icon={
-                <MaterialCommunityIcons
-                  name="power-plug-off-outline"
-                  size={moderateScale(40)}
-                  color={colors.textSub}
-                />
-              }
-              title="You're offline"
-              subtitle="Go online to start receiving job requests."
-            />
-          </Card>
-        ) : (
-          <>
-            <Card>
+        <Card>
+          <Text
+            style={{
+              fontFamily: 'Poppins_600SemiBold',
+              fontSize: moderateScale(14),
+              color: colors.text,
+              marginBottom: moderateScale(12),
+            }}
+          >
+            Today's earnings
+          </Text>
+          {earnings ? (
+            <View>
               <Text
-                style={{
-                  fontFamily: 'Poppins_600SemiBold',
-                  fontSize: moderateScale(14),
-                  color: colors.text,
-                  marginBottom: moderateScale(12),
-                }}
+                style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(22), color: COLORS.brandGreen }}
               >
-                Today's earnings
+                GHS {earnings.totalGHS.toFixed(2)}
               </Text>
-              {earnings ? (
-                <View>
-                  <Text
-                    style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(22), color: COLORS.brandGreen }}
-                  >
-                    GHS {earnings.totalGHS.toFixed(2)}
-                  </Text>
-                  <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: colors.textSub }}>
-                    {earnings.completedJobs} jobs • {earnings.bagsCollected} bags
-                  </Text>
-                </View>
-              ) : (
-                <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(13), color: colors.textSub }}>
-                  Loading…
-                </Text>
-              )}
-            </Card>
+              <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: colors.textSub }}>
+                {earnings.completedJobs} jobs • {earnings.bagsCollected} bags
+              </Text>
+            </View>
+          ) : (
+            <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(13), color: colors.textSub }}>
+              Loading…
+            </Text>
+          )}
+        </Card>
 
-            <Card>
-              <View style={{ gap: moderateScale(12), alignItems: 'center' }}>
-                <MaterialCommunityIcons name="radar" size={moderateScale(36)} color={COLORS.brandGreen} />
-                <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(14), color: colors.text }}>
-                  Waiting for job requests
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: 'Poppins_400Regular',
-                    fontSize: moderateScale(12),
-                    color: colors.textSub,
-                    textAlign: 'center',
-                  }}
-                >
-                  You'll be notified the moment a customer requests a pickup with you.
-                </Text>
-              </View>
-            </Card>
-          </>
-        )}
+        <Card>
+          <View style={{ gap: moderateScale(12), alignItems: 'center' }}>
+            <MaterialCommunityIcons name="radar" size={moderateScale(36)} color={COLORS.brandGreen} />
+            <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(14), color: colors.text }}>
+              Waiting for job requests
+            </Text>
+            <Text
+              style={{
+                fontFamily: 'Poppins_400Regular',
+                fontSize: moderateScale(12),
+                color: colors.textSub,
+                textAlign: 'center',
+              }}
+            >
+              You'll be notified the moment a customer requests a pickup with you.
+            </Text>
+          </View>
+        </Card>
       </ScrollView>
 
       <IncomingRequestModal

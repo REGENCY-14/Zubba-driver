@@ -11,6 +11,7 @@ import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
 import { logout } from '../../slices/auth/authSlice';
 import { clearStoredAuth } from '../../utils/authStorage';
+import { driverService } from '../../api/driverService';
 import { toggleSidebar } from '../../slices/ui/uiSlice';
 import type { RootState } from '../../store';
 import type { RootStackScreenProps } from '../../navigation/types';
@@ -31,6 +32,8 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
     : 'ZB';
 
   const handleLogout = async () => {
+    // Drop availability before clearing the token so nearby matching stops.
+    await driverService.updateMe({ is_available: false }).catch(() => {});
     await clearStoredAuth();
     dispatch(logout());
     navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });

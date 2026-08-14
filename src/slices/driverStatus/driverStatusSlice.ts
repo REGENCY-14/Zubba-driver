@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { DriverStatusState } from './driverStatus.types';
 
-// Resets to offline on every app start (no persistence) — matches the real-world
-// expectation that a driver has to actively go online each session.
+// Drivers are always online while authenticated. useDriverPresence flips this
+// to true as soon as an access token is present.
 const initialState: DriverStatusState = {
   isOnline: false,
 };

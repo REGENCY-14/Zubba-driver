@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Pressable, SectionList, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, ScrollView, SectionList, Text, View } from 'react-native';
 import { useDispatch } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
 import { AppBottomNav } from '../../components/AppBottomNav';
 import { StatusPill, StatusKind } from '../../components/common/StatusPill';
@@ -15,15 +16,25 @@ import { toJob, Job, JobStatus } from '../../utils/jobMapping';
 import { toggleSidebar } from '../../slices/ui/uiSlice';
 import type { RootStackScreenProps } from '../../navigation/types';
 
-type JobsTab = 'active' | 'upcoming' | 'history';
+type StatusFilter = 'all' | JobStatus;
 
-const TABS: { key: JobsTab; label: string }[] = [
-  { key: 'active', label: 'Active' },
-  { key: 'upcoming', label: 'Upcoming' },
-  { key: 'history', label: 'History' },
+const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'pending', label: 'Pending' },
+  { key: 'paid', label: 'Paid' },
+  { key: 'accepted', label: 'Accepted' },
+  { key: 'en_route', label: 'En route' },
+  { key: 'arrived', label: 'Arrived' },
+  { key: 'completed', label: 'Completed' },
+  { key: 'cancelled', label: 'Cancelled' },
 ];
 
+const ALL_STATUSES = STATUS_FILTERS.filter((f) => f.key !== 'all')
+  .map((f) => f.key)
+  .join(',');
+
 const STATUS_LABEL: Record<JobStatus, string> = {
+  pending: 'Pending',
   paid: 'Paid',
   accepted: 'Accepted',
   en_route: 'En route',
@@ -38,41 +49,17 @@ function statusPillKind(status: JobStatus): StatusKind {
   return 'pending';
 }
 
-const EMPTY_COPY: Record<JobsTab, { title: string; subtitle: string }> = {
-  active: {
-    title: 'No active jobs',
-    subtitle: "Jobs you've accepted and are working on will show up here.",
-  },
-  upcoming: {
-    title: 'No upcoming jobs',
-    subtitle: 'Scheduled pickup assignments for drivers are not available yet.',
-  },
-  history: {
-    title: 'No job history yet',
-    subtitle: 'Completed and cancelled jobs will show up here.',
-  },
-};
-
 export function JobsScreen({ navigation }: RootStackScreenProps<'Jobs'>) {
   const { colors } = useTheme();
   const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState<JobsTab>('active');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async (tab: JobsTab) => {
+  const load = useCallback(async (filter: StatusFilter) => {
     setLoading(true);
-    setJobs([]);
-
-    if (tab === 'upcoming') {
-      // No backend endpoint exposes a driver's upcoming scheduled pickups yet
-      // (schedules are customer-only) — real empty state, not fabricated data.
-      setLoading(false);
-      return;
-    }
-
     try {
-      const status = tab === 'active' ? 'paid,accepted,en_route,arrived' : 'completed,cancelled';
+      const status = filter === 'all' ? ALL_STATUSES : filter;
       const res = await driverService.getMyRequests({ status, limit: 50 });
       setJobs(res.data.items.map(toJob));
     } catch {
@@ -82,54 +69,68 @@ export function JobsScreen({ navigation }: RootStackScreenProps<'Jobs'>) {
     }
   }, []);
 
-  useEffect(() => {
-    load(activeTab);
-  }, [activeTab, load]);
+  useFocusEffect(
+    useCallback(() => {
+      load(statusFilter);
+    }, [load, statusFilter]),
+  );
 
   const scrollBottomPadding = useScrollBottomPadding({ withBottomNav: true });
+  const emptySubtitle =
+    statusFilter === 'all'
+      ? 'New pickup requests and jobs you have worked will show up here.'
+      : `No ${STATUS_LABEL[statusFilter].toLowerCase()} jobs right now.`;
 
   return (
     <ScreenShell edges={['top', 'left', 'right']}>
       <ScreenHeader title="Jobs" onMenuPress={() => dispatch(toggleSidebar())} horizontalPadding={20} />
-      <View style={{ paddingHorizontal: moderateScale(20), paddingTop: moderateScale(4) }}>
-        <View style={{ flexDirection: 'row', gap: moderateScale(8) }}>
-          {TABS.map(tab => {
-            const active = activeTab === tab.key;
-            return (
-              <Pressable
-                key={tab.key}
-                onPress={() => setActiveTab(tab.key)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: moderateScale(20),
+          paddingTop: moderateScale(4),
+          paddingBottom: moderateScale(8),
+          gap: moderateScale(8),
+        }}
+      >
+        {STATUS_FILTERS.map((filter) => {
+          const active = statusFilter === filter.key;
+          return (
+            <Pressable
+              key={filter.key}
+              onPress={() => setStatusFilter(filter.key)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              style={{
+                minHeight: moderateScale(36),
+                paddingHorizontal: moderateScale(14),
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderRadius: moderateScale(18),
+                backgroundColor: active ? COLORS.brandGreen : colors.surface,
+                borderWidth: 1,
+                borderColor: active ? COLORS.brandGreen : colors.border,
+              }}
+            >
+              <Text
                 style={{
-                  flex: 1,
-                  minHeight: moderateScale(44),
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderRadius: moderateScale(12),
-                  backgroundColor: active ? COLORS.brandGreen : colors.surface,
-                  borderWidth: 1,
-                  borderColor: active ? COLORS.brandGreen : colors.border,
+                  fontFamily: 'Poppins_500Medium',
+                  fontSize: moderateScale(13),
+                  color: active ? '#FFFFFF' : colors.text,
                 }}
               >
-                <Text
-                  style={{
-                    fontFamily: 'Poppins_500Medium',
-                    fontSize: moderateScale(13),
-                    color: active ? '#FFFFFF' : colors.text,
-                  }}
-                >
-                  {tab.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
+                {filter.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
       <SectionList
         sections={[{ title: null as string | null, data: jobs }]}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: moderateScale(20), paddingBottom: scrollBottomPadding, flexGrow: 1 }}
         ListEmptyComponent={
           loading ? (
@@ -145,7 +146,7 @@ export function JobsScreen({ navigation }: RootStackScreenProps<'Jobs'>) {
               Loading…
             </Text>
           ) : (
-            <EmptyState title={EMPTY_COPY[activeTab].title} subtitle={EMPTY_COPY[activeTab].subtitle} />
+            <EmptyState title="No jobs" subtitle={emptySubtitle} />
           )
         }
         renderItem={({ item }) => (

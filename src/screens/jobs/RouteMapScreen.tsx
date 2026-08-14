@@ -33,9 +33,8 @@ export function RouteMapScreen({ navigation, route }: RootStackScreenProps<'Rout
   }, [jobId]);
 
   // Keep the backend's `drivers.location` fresh while this screen is open so
-  // the customer's live tracking map reflects real movement instead of a
-  // frozen position -- the driver only otherwise reports location once, on
-  // going online (see HomeScreen's handleToggleOnline).
+  // the customer's live tracking map reflects real movement. Idle updates also
+  // run from useDriverPresence (~15s); this interval is tighter for live trips.
   useEffect(() => {
     driverCoordsRef.current = driverCoords;
   }, [driverCoords]);

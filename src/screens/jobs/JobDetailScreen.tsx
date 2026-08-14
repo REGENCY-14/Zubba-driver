@@ -17,6 +17,7 @@ import { handleApiError } from '../../utils/handleApiError';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 const STATUS_LABEL: Record<JobStatus, string> = {
+  pending: 'Pending',
   paid: 'Paid',
   accepted: 'Accepted',
   en_route: 'En route',
@@ -31,7 +32,7 @@ function statusPillKind(status: JobStatus): StatusKind {
   return 'pending';
 }
 
-// Backend only allows single-step transitions from this screen (paid ->
+// Backend only allows single-step transitions from this screen (pending/paid ->
 // accepted -> en_route -> arrived) — the next status is always derived from
 // the current one rather than requested directly. There is no arrived ->
 // completed transition anymore: once arrived, the only self-service action
@@ -39,6 +40,7 @@ function statusPillKind(status: JobStatus): StatusKind {
 // Confirm Collection flow in CollectionCodeScreen after the customer pays
 // and the request reaches "paid".
 const NEXT_STATUS: Partial<Record<JobStatus, JobStatus>> = {
+  pending: 'accepted',
   paid: 'accepted',
   accepted: 'en_route',
   en_route: 'arrived',
@@ -72,6 +74,19 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
     try {
       const res = await driverService.updateRequestStatus(job.id, nextStatus);
       setJob(toJob(res.data.request));
+    } catch (err) {
+      handleApiError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const declineJob = async () => {
+    if (!job) return;
+    setLoading(true);
+    try {
+      await driverService.updateRequestStatus(job.id, 'cancelled');
+      if (navigation.canGoBack()) navigation.goBack();
     } catch (err) {
       handleApiError(err);
     } finally {
@@ -184,6 +199,13 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
           />
         </View>
       </View>
+
+      {job.status === 'pending' && (
+        <View style={{ gap: moderateScale(12) }}>
+          <Button label="Accept job" size="lg" onPress={advanceStatus} loading={loading} />
+          <Button label="Decline" size="lg" variant="secondary" onPress={declineJob} loading={loading} />
+        </View>
+      )}
 
       {job.status === 'paid' && (
         <Button label="Accept job" size="lg" onPress={advanceStatus} loading={loading} />

@@ -1,7 +1,7 @@
 import type { MapCoord } from '../components/maps/mapUtils';
 import type { DriverRequestItem, RequestStatus } from '../types/request.types';
 
-export type JobStatus = Exclude<RequestStatus, 'pending'>;
+export type JobStatus = RequestStatus;
 
 export interface Job {
   id: string;
@@ -38,7 +38,7 @@ export function toJob(request: DriverRequestItem): Job {
     customerPhone: request.customer_phone,
     pickupAddress: request.pickup_address,
     pickupLocation,
-    status: request.status as JobStatus,
+    status: request.status,
     distanceKm: Number(distanceKm.toFixed(1)),
     etaMinutes: Math.max(1, Math.round(distanceKm * 2)),
     estimatedPay: price,

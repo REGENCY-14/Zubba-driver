@@ -26,6 +26,7 @@ import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import { PaystackCheckoutProvider } from "./src/context/PaystackCheckoutContext";
 import { hydrateDriverProfile } from "./src/slices/driverProfile/hydrateDriverProfile";
 import { configureNotifications } from "./src/services/pushNotifications";
+import { useDriverPresence } from "./src/hooks/useDriverPresence";
 import { env } from "./src/utils/env";
 import type { RootStackParamList } from "./src/navigation/types";
 
@@ -37,6 +38,11 @@ if ((TextInput as any).defaultProps == null) (TextInput as any).defaultProps = {
 import "./global.css";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+function DriverPresence() {
+  useDriverPresence();
+  return null;
+}
 
 function AppContent() {
   const { isDark, colors } = useTheme();
@@ -51,6 +57,7 @@ function AppContent() {
             backgroundColor={colors.bg}
             translucent={false}
           />
+          <DriverPresence />
           <RootNavigator />
           <AppSidebar navigationRef={navigationRef} />
           <Toaster />

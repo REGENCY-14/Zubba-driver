@@ -42,7 +42,7 @@ export function ApplicationStatusScreen({ navigation }: RootStackScreenProps<'Ap
           textAlign: 'center',
         }}
       >
-        You can now go online and start accepting jobs.
+        You're ready to start accepting jobs.
       </Text>
       <Button
         label="Continue"

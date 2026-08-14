@@ -5,7 +5,7 @@ import { ScreenShell } from '../../components/common/ScreenShell';
 import { resolveInitialRoute } from '../../utils/resolveInitialRoute';
 import type { RootStackScreenProps } from '../../navigation/types';
 
-const zubbaLogo = require('../../../assets/zubba-icon.png');
+const zubbaLogo = require('../../../assets/zubba-icon-white.png');
 const splashScreenLayer = require('../../../assets/splash-screen-layer.png');
 
 const MIN_SPLASH_MS = 1800;
@@ -86,7 +86,6 @@ export function SplashScreen({ navigation }: RootStackScreenProps<'Splash'>) {
       <Image
         source={zubbaLogo}
         resizeMode="contain"
-        tintColor="#FFFFFF"
         style={{
           width: logoSize,
           height: logoSize,

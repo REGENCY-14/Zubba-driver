@@ -11,6 +11,7 @@ import { COLORS } from '../constants/colors';
 import { closeSidebar } from '../slices/ui/uiSlice';
 import { logout } from '../slices/auth/authSlice';
 import { clearStoredAuth } from '../utils/authStorage';
+import { driverService } from '../api/driverService';
 import type { RootState } from '../store';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -76,6 +77,7 @@ export function AppSidebar({ navigationRef }: AppSidebarProps) {
 
   const handleLogout = async () => {
     dispatch(closeSidebar());
+    await driverService.updateMe({ is_available: false }).catch(() => {});
     await clearStoredAuth();
     dispatch(logout());
     navigationRef.current?.reset({ index: 0, routes: [{ name: 'Welcome' }] });

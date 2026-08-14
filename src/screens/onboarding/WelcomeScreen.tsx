@@ -46,7 +46,7 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
           Accept jobs, collect recyclables, get paid.
         </Text>
       </View>
-
+ 
       <View style={{ gap: moderateScale(12) }}>
         <Pressable
           onPress={() => navigation.navigate('SignUp')}
