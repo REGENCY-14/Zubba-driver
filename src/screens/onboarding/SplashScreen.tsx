@@ -65,8 +65,7 @@ export function SplashScreen({ navigation }: RootStackScreenProps<'Splash'>) {
   }
 
   return (
-    <ScreenShell backgroundColor="#2EA043">
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ backgroundColor:"#2EA043", flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <View
         style={{
           position: 'absolute',
@@ -92,7 +91,6 @@ export function SplashScreen({ navigation }: RootStackScreenProps<'Splash'>) {
           transform: [{ scaleY: 0.92 }],
         }}
       />
-      </View>
-    </ScreenShell>
+    </View>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useTheme } from '../../context/ThemeContext';
@@ -38,6 +39,7 @@ const POLL_INTERVAL_MS = 4000;
 export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps<'CollectionCode'>) {
   const { jobId } = route.params;
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const [job, setJob] = useState<Job | null>(null);
   const [step, setStep] = useState<Step>('code');
@@ -206,7 +208,9 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
-            padding: moderateScale(24),
+            paddingTop: moderateScale(24),
+            paddingHorizontal: moderateScale(24),
+            paddingBottom: moderateScale(24) + insets.bottom,
             gap: moderateScale(16),
           }}
         >

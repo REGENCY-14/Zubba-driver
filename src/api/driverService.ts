@@ -1,10 +1,20 @@
 import { api } from './axios';
 import { ApiResponse, PagedApiResponse } from '../types/api.types';
-import { DriverRequestItem, RequestStatus, UpdateDriverMeDto } from '../types/request.types';
+import {
+  DriverDetailsDto,
+  DriverRequestItem,
+  RequestStatus,
+  UpdateDriverMeDto,
+} from '../types/request.types';
 
 export const driverService = {
   updateMe: async (payload: UpdateDriverMeDto) => {
     const { data } = await api.patch<ApiResponse<{ driver: unknown }>>('/drivers/me', payload);
+    return data;
+  },
+
+  getById: async (id: string) => {
+    const { data } = await api.get<ApiResponse<{ driver: DriverDetailsDto }>>(`/drivers/${id}`);
     return data;
   },
 

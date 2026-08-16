@@ -3,6 +3,7 @@ import * as Notifications from 'expo-notifications';
 
 import { authService } from '../api/authService';
 import { userService } from '../api/userService';
+import { driverService } from '../api/driverService';
 import {
   loadStoredAuth,
   clearStoredAuth,
@@ -12,6 +13,9 @@ import {
 } from './authStorage';
 import { store } from '../store';
 import { setCredentials, logout } from '../slices/auth/authSlice';
+import { submitKyc } from '../slices/driverProfile/driverProfileSlice';
+import { isDriverProfileComplete, toKycData } from './driverProfileCompleteness';
+import type { User } from '../slices/auth/auth.types';
 
 export type InitialRoute =
   | 'Home'
@@ -19,6 +23,26 @@ export type InitialRoute =
   | 'Welcome'
   | 'OnboardLocationAccess'
   | 'OnboardNotificationsAccess';
+
+// The single "is this driver ready for Home" gate: `user.terms_accepted_at`
+// only tracks legal terms acceptance, not whether their KYC/vehicle data is
+// actually on file, so we fetch the real driver record and check it directly.
+// Fails safe — any error fetching the driver record routes to Kyc rather
+// than risking an incomplete driver reaching Home.
+export async function resolveDriverHomeRoute(user: User): Promise<'Home' | 'Kyc'> {
+  try {
+    const res = await driverService.getById(user.id);
+    if (res.success && isDriverProfileComplete(res.data.driver)) {
+      return 'Home';
+    }
+    if (res.success) {
+      store.dispatch(submitKyc(toKycData(res.data.driver)));
+    }
+    return 'Kyc';
+  } catch {
+    return 'Kyc';
+  }
+}
 
 async function resolveUnauthenticatedRoute(): Promise<InitialRoute> {
   const location = await Location.getForegroundPermissionsAsync();
@@ -51,7 +75,7 @@ async function resolveAuthenticatedRoute(
         }),
       );
       await saveAuthUser(res.data.user);
-      return res.data.user.terms_accepted_at ? 'Home' : 'Kyc';
+      return resolveDriverHomeRoute(res.data.user);
     }
   } catch {
     try {
@@ -75,7 +99,7 @@ async function resolveAuthenticatedRoute(
           }),
         );
         await saveAuthUser(res.data.user);
-        return res.data.user.terms_accepted_at ? 'Home' : 'Kyc';
+        return resolveDriverHomeRoute(res.data.user);
       }
     } catch {
       // Token invalid and refresh also failed — fall through to logged-out state.

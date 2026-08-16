@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
@@ -27,6 +28,7 @@ interface IncomingRequestModalProps {
 
 export function IncomingRequestModal({ request, onRespond }: IncomingRequestModalProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
 
   useEffect(() => {
@@ -55,7 +57,9 @@ export function IncomingRequestModal({ request, onRespond }: IncomingRequestModa
             backgroundColor: colors.card,
             borderTopLeftRadius: moderateScale(32),
             borderTopRightRadius: moderateScale(32),
-            padding: moderateScale(24),
+            paddingTop: moderateScale(24),
+            paddingHorizontal: moderateScale(24),
+            paddingBottom: moderateScale(24) + insets.bottom,
             gap: moderateScale(16),
           }}
         >

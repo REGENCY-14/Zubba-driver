@@ -16,6 +16,7 @@
     },
     "android": {
       "package": "com.zubba.driver",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/ic_launcher.png",
         "backgroundColor": "#FFFFFF"
@@ -35,7 +36,8 @@
           "backgroundColor": "#2EA043"
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-notifications"
     ],
     "extra": {
       "eas": {

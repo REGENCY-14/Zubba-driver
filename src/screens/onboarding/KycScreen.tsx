@@ -28,24 +28,29 @@ export function KycScreen({ navigation }: RootStackScreenProps<'Kyc'>) {
   const { colors } = useTheme();
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
+  const kyc = useSelector((state: RootState) => state.driverProfile.kyc);
 
-  const [firstname, setFirstname] = useState('');
-  const [lastname, setLastname] = useState('');
-  const [ghanaCardNumber, setGhanaCardNumber] = useState('');
-  const [ghanaCardImage, setGhanaCardImage] = useState<string | null>(null);
-  const [driversLicenseNumber, setDriversLicenseNumber] = useState('');
-  const [driversLicenseImage, setDriversLicenseImage] = useState<string | null>(null);
-  const [vehicleType, setVehicleType] = useState<VehicleType>('tricycle');
-  const [plateNumber, setPlateNumber] = useState('');
-  const [vehiclePhoto, setVehiclePhoto] = useState<string | null>(null);
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [firstname, setFirstname] = useState(user?.firstname ?? '');
+  const [lastname, setLastname] = useState(user?.lastname ?? '');
+  const [ghanaCardNumber, setGhanaCardNumber] = useState(kyc?.ghanaCardNumber ?? '');
+  const [ghanaCardImage, setGhanaCardImage] = useState<string | null>(kyc?.ghanaCardImage ?? null);
+  const [driversLicenseNumber, setDriversLicenseNumber] = useState(kyc?.driversLicenseNumber ?? '');
+  const [driversLicenseImage, setDriversLicenseImage] = useState<string | null>(
+    kyc?.driversLicenseImage ?? null
+  );
+  const [vehicleType, setVehicleType] = useState<VehicleType>(kyc?.vehicleType ?? 'tricycle');
+  const [plateNumber, setPlateNumber] = useState(kyc?.plateNumber ?? '');
+  const [vehiclePhoto, setVehiclePhoto] = useState<string | null>(kyc?.vehiclePhoto ?? null);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(kyc?.profilePhoto ?? null);
   const scrollBottomPadding = useScrollBottomPadding();
 
   const canContinue = Boolean(
     firstname.trim() &&
       lastname.trim() &&
       ghanaCardNumber.trim() &&
+      ghanaCardImage &&
       driversLicenseNumber.trim() &&
+      driversLicenseImage &&
       plateNumber.trim() &&
       vehiclePhoto &&
       profilePhoto

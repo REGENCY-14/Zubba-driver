@@ -18,6 +18,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: "com.zubba.driver",
+    googleServicesFile: "./google-services.json",
     adaptiveIcon: {
       foregroundImage: "./assets/ic_launcher.png",
       backgroundColor: "#FFFFFF",
@@ -31,7 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-splash-screen",
       {
-        image: "./assets/zubba-icon-white.png",
+        image: "./assets/ic_launcher.png",
         imageWidth: 220,
         resizeMode: "contain",
         backgroundColor: "#2EA043",

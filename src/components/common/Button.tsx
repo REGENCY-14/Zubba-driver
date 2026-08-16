@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, PressableProps, Text } from 'react-native
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
 import type { ButtonVariant } from '../../types/ui';
+import { useTheme } from '../../context/ThemeContext';
 
 // The customer app has two competing button components (Button.tsx, RoundedButton.tsx)
 // and most screens bypass both with an inline Pressable (DRIVER_APP_HANDOFF.md §4).
@@ -32,12 +33,13 @@ export function Button({
   const isPremium = variant === 'premium';
   const isGhost = variant === 'ghost';
   const isSecondary = variant === 'secondary';
+  const { colors } = useTheme();
 
   const bg = isPremium ? COLORS.premiumGoldBg : isPrimary ? COLORS.brandGreen : 'transparent';
   const textColor = isPremium
     ? COLORS.premiumGoldText
     : isPrimary
-    ? '#FFFFFF'
+    ? colors.text
     : isGhost
     ? COLORS.brandGreen
     : '#101828';

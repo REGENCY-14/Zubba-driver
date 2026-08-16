@@ -51,3 +51,25 @@ export interface UpdateDriverMeDto {
   vehicle_type?: string | null;
   vehicle_photo?: string | null;
 }
+
+export interface DriverDetailsDto {
+  id: string;
+  firstname: string;
+  lastname: string;
+  email: string | null;
+  phone: string | null;
+  is_active: boolean;
+  verified: boolean;
+  terms_accepted_at: string | null;
+  created_at: string;
+  is_available: boolean;
+  is_premium: boolean;
+  vehicle_plate: string | null;
+  profile_picture: string | null;
+  ghana_card_number: string | null;
+  ghana_card_photo: string | null;
+  drivers_license_number: string | null;
+  drivers_license_photo: string | null;
+  vehicle_type: string | null;
+  vehicle_photo: string | null;
+}

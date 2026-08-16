@@ -11,6 +11,7 @@ import { authService } from '../../api/authService';
 import { setCredentials } from '../../slices/auth/authSlice';
 import { saveAuthTokens, saveAuthUser } from '../../utils/authStorage';
 import { syncPushNotifications } from '../../services/pushNotifications';
+import { resolveDriverHomeRoute } from '../../utils/resolveInitialRoute';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 export function VerifyOtpScreen({ navigation, route }: RootStackScreenProps<'VerifyOtp'>) {
@@ -49,11 +50,8 @@ export function VerifyOtpScreen({ navigation, route }: RootStackScreenProps<'Ver
       await saveAuthUser(user);
       syncPushNotifications().catch(() => {});
 
-      if (user.terms_accepted_at) {
-        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-      } else {
-        navigation.reset({ index: 0, routes: [{ name: 'Kyc' }] });
-      }
+      const route = await resolveDriverHomeRoute(user);
+      navigation.reset({ index: 0, routes: [{ name: route }] });
     } catch (err: any) {
       setError(err?.response?.data?.error?.message ?? 'Invalid code. Try again.');
       setDigits(['', '', '', '']);
