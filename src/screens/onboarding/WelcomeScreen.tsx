@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { ScreenShell } from '../../components/common/ScreenShell';
@@ -48,16 +48,12 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
       </View>
  
       <View style={{ gap: moderateScale(12) }}>
-        <Pressable
-          onPress={() => navigation.navigate('SignUp')}
-        >
-          <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(14), color: colors.text }}>Sign up as a driver</Text>
-        </Pressable>
-        <Pressable
+        <Button label="Sign up as a driver" variant="primary" onPress={() => navigation.navigate('SignUp')} />
+        <Button
+          label="I already have an account"
+          variant="secondary"
           onPress={() => navigation.navigate('SignIn')}
-        >
-          <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(14), color: colors.text }}>I already have an account</Text>
-        </Pressable>
+        />
       </View>
       </View>
     </ScreenShell>

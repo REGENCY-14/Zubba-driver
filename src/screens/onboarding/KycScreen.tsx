@@ -78,7 +78,16 @@ export function KycScreen({ navigation }: RootStackScreenProps<'Kyc'>) {
 
   return (
     <ScreenShell>
-      <ScreenHeader onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} />
+      <ScreenHeader
+        onBack={() =>
+          // VerifyOtpScreen reaches this screen via navigation.reset (not
+          // navigate), so there's normally nothing to go back to — fall back
+          // to Welcome instead of hiding the back button altogether.
+          navigation.canGoBack()
+            ? navigation.goBack()
+            : navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] })
+        }
+      />
       <ScrollView
         contentContainerStyle={{ padding: moderateScale(24), gap: moderateScale(16), paddingBottom: scrollBottomPadding }}
       >
