@@ -46,6 +46,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     [
+      "expo-build-properties",
+      {
+        android: {
+          buildArchs: ["arm64-v8a"],
+          cmakeVersion: "4.1.2",
+        },
+      },
+    ],
+    [
       "expo-notifications",
       {
         icon: "./assets/ic_launcher.png",
