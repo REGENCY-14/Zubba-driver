@@ -88,6 +88,12 @@ export function JobsScreen({ navigation }: RootStackScreenProps<'Jobs'>) {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        // react-native-web's ScrollView defaults to flexGrow: 1 on its outer
+        // container. Without this override, this filter row (nested above the
+        // job list, not meant to fill the screen like every other ScrollView
+        // in the app) stretched to consume all remaining vertical space on
+        // web, and alignItems: 'stretch' blew each chip up to match it.
+        style={{ flexGrow: 0, flexShrink: 0 }}
         contentContainerStyle={{
           paddingHorizontal: moderateScale(20),
           paddingTop: moderateScale(4),
