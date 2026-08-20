@@ -9,6 +9,7 @@ import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { logout } from '../../slices/auth/authSlice';
 import { clearStoredAuth } from '../../utils/authStorage';
 import { driverService } from '../../api/driverService';
@@ -24,6 +25,8 @@ interface SettingsRow {
 
 export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>) {
   const { colors, isDark, toggle } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
+  const destructiveColor = isDark ? SHARED_DARK.signOutText : COLORS.destructiveRed;
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
 
@@ -88,7 +91,7 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
                   width: moderateScale(56),
                   height: moderateScale(56),
                   borderRadius: moderateScale(28),
-                  backgroundColor: COLORS.brandGreen,
+                  backgroundColor: activeGreen,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -125,7 +128,7 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
             <Switch
               value={isDark}
               onValueChange={toggle}
-              trackColor={{ false: colors.border, true: COLORS.brandGreen }}
+              trackColor={{ false: colors.border, true: activeGreen }}
               thumbColor="#FFFFFF"
               accessibilityLabel="Toggle dark mode"
             />
@@ -166,13 +169,14 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
             justifyContent: 'center',
             gap: moderateScale(8),
             minHeight: moderateScale(48),
-            borderRadius: moderateScale(12),
+            borderRadius: 9999,
             borderWidth: 1,
-            borderColor: COLORS.destructiveRed,
+            backgroundColor: isDark ? SHARED_DARK.signOutBg : 'transparent',
+            borderColor: isDark ? SHARED_DARK.signOutBorder : COLORS.destructiveRed,
           }}
         >
-          <MaterialCommunityIcons name="logout" size={moderateScale(18)} color={COLORS.destructiveRed} />
-          <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(14), color: COLORS.destructiveRed }}>
+          <MaterialCommunityIcons name="logout" size={moderateScale(18)} color={destructiveColor} />
+          <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(14), color: destructiveColor }}>
             Log out
           </Text>
         </Pressable>

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { moderateScale, scale } from '../utils/scale';
 import { COLORS } from '../constants/colors';
+import { SHARED_DARK } from '../constants/darkTheme';
 import { closeSidebar } from '../slices/ui/uiSlice';
 import { logout } from '../slices/auth/authSlice';
 import { clearStoredAuth } from '../utils/authStorage';
@@ -49,7 +50,12 @@ const MORE_ITEMS: SidebarItem[] = [
 ];
 
 export function AppSidebar({ navigationRef }: AppSidebarProps) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
+  // Same red used for the standalone Sign out button on Settings (Figma
+  // node 5494-41901) — kept consistent even though this is a plain sidebar
+  // row rather than the bordered pill button.
+  const destructiveColor = isDark ? SHARED_DARK.signOutText : COLORS.destructiveRed;
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const isOpen = useSelector((state: RootState) => state.ui.isSidebarOpen);
@@ -140,7 +146,7 @@ export function AppSidebar({ navigationRef }: AppSidebarProps) {
                 width: moderateScale(48),
                 height: moderateScale(48),
                 borderRadius: moderateScale(24),
-                backgroundColor: COLORS.brandGreen,
+                backgroundColor: activeGreen,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -222,8 +228,8 @@ export function AppSidebar({ navigationRef }: AppSidebarProps) {
               minHeight: moderateScale(48),
             }}
           >
-            <MaterialCommunityIcons name="logout" size={moderateScale(20)} color={COLORS.destructiveRed} />
-            <Text style={{ fontFamily: 'Poppins_500Medium', fontSize: moderateScale(14), color: COLORS.destructiveRed }}>
+            <MaterialCommunityIcons name="logout" size={moderateScale(20)} color={destructiveColor} />
+            <Text style={{ fontFamily: 'Poppins_500Medium', fontSize: moderateScale(14), color: destructiveColor }}>
               Log out
             </Text>
           </Pressable>
