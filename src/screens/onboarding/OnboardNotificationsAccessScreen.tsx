@@ -7,13 +7,14 @@ import { Button } from '../../components/common/Button';
 import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { requestNotificationPermissionOnly } from '../../services/pushNotifications';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 export function OnboardNotificationsAccessScreen({
   navigation,
 }: RootStackScreenProps<'OnboardNotificationsAccess'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const [loading, setLoading] = useState(false);
 
   const enableNotifications = async () => {
@@ -46,7 +47,7 @@ export function OnboardNotificationsAccessScreen({
             width: moderateScale(96),
             height: moderateScale(96),
             borderRadius: moderateScale(48),
-            backgroundColor: `${COLORS.brandGreen}1A`,
+            backgroundColor: isDark ? SHARED_DARK.brandTintBg : `${COLORS.brandGreen}1A`,
             alignItems: 'center',
             justifyContent: 'center',
           }}

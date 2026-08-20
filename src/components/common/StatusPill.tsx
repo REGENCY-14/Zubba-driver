@@ -2,6 +2,8 @@ import { Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
+import { useTheme } from '../../context/ThemeContext';
 
 export type StatusKind = 'success' | 'pending' | 'failed';
 
@@ -22,13 +24,24 @@ const STATUS_CONFIG: Record<StatusKind, StatusConfig> = {
   failed: { color: COLORS.statusFailed, bg: 'rgba(255,56,60,0.1)', icon: 'close-circle', label: 'Failed' },
 };
 
+// Dark-mode counterpart — pastel-on-white pills tuned for a light background
+// read as near-invisible on a dark surface, so dark mode swaps to
+// light-on-translucent-dark with a brighter text color instead.
+const STATUS_CONFIG_DARK: Record<StatusKind, { color: string; bg: string }> = {
+  success: { color: SHARED_DARK.statusSuccessText, bg: SHARED_DARK.statusSuccessBg },
+  pending: { color: SHARED_DARK.statusPendingText, bg: SHARED_DARK.statusPendingBg },
+  failed: { color: SHARED_DARK.statusFailedText, bg: SHARED_DARK.statusFailedBg },
+};
+
 interface StatusPillProps {
   status: StatusKind;
   label?: string;
 }
 
 export function StatusPill({ status, label }: StatusPillProps) {
-  const cfg = STATUS_CONFIG[status];
+  const { isDark } = useTheme();
+  const base = STATUS_CONFIG[status];
+  const cfg = isDark ? { ...base, ...STATUS_CONFIG_DARK[status] } : base;
   return (
     <View
       accessibilityRole="text"

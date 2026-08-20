@@ -6,13 +6,14 @@ import { Button } from '../../components/common/Button';
 import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { toast } from 'sonner-native';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 export function OnboardLocationAccessScreen({
   navigation,
 }: RootStackScreenProps<'OnboardLocationAccess'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
 
   const requestLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -37,7 +38,7 @@ export function OnboardLocationAccessScreen({
             width: moderateScale(96),
             height: moderateScale(96),
             borderRadius: moderateScale(48),
-            backgroundColor: `${COLORS.brandGreen}1A`,
+            backgroundColor: isDark ? SHARED_DARK.brandTintBg : `${COLORS.brandGreen}1A`,
             alignItems: 'center',
             justifyContent: 'center',
           }}

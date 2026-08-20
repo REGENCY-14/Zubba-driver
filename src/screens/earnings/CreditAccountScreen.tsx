@@ -12,6 +12,7 @@ import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { useWalletPaystackCheckout } from '../../hooks/useWalletPaystackCheckout';
 import { formatAuthPhone } from '../../utils/paymentProviders';
 import type { RootState } from '../../store';
@@ -23,7 +24,7 @@ export function CreditAccountScreen({
   navigation,
   route,
 }: RootStackScreenProps<'CreditAccount'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const user = useSelector((state: RootState) => state.auth.user);
   const { startDeposit, isLoading } = useWalletPaystackCheckout();
 
@@ -145,7 +146,7 @@ export function CreditAccountScreen({
             gap: moderateScale(8),
             padding: moderateScale(12),
             borderRadius: moderateScale(12),
-            backgroundColor: `${COLORS.brandGreen}14`,
+            backgroundColor: isDark ? SHARED_DARK.brandTintBg : `${COLORS.brandGreen}14`,
           }}
         >
           <MaterialCommunityIcons name="shield-check-outline" size={moderateScale(18)} color={COLORS.brandGreen} />

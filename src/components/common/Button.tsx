@@ -2,8 +2,9 @@ import { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, PressableProps, Text } from 'react-native';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
-import type { ButtonVariant } from '../../types/ui';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { useTheme } from '../../context/ThemeContext';
+import type { ButtonVariant } from '../../types/ui';
 
 // The customer app has two competing button components (Button.tsx, RoundedButton.tsx)
 // and most screens bypass both with an inline Pressable (DRIVER_APP_HANDOFF.md §4).
@@ -33,16 +34,24 @@ export function Button({
   const isPremium = variant === 'premium';
   const isGhost = variant === 'ghost';
   const isSecondary = variant === 'secondary';
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
 
-  const bg = isPremium ? COLORS.premiumGoldBg : isPrimary ? COLORS.brandGreen : 'transparent';
+  // Primary keeps the same brand-green hue in both modes, just translucent in
+  // dark instead of solid — the one dark-mode button treatment used everywhere.
+  const bg = isPremium
+    ? COLORS.premiumGoldBg
+    : isPrimary
+    ? isDark
+      ? SHARED_DARK.buttonPrimaryBg
+      : COLORS.brandGreen
+    : 'transparent';
   const textColor = isPremium
     ? COLORS.premiumGoldText
     : isPrimary
-    ? colors.text
+    ? '#FFFFFF'
     : isGhost
     ? COLORS.brandGreen
-    : '#101828';
+    : colors.text;
 
   return (
     <Pressable
@@ -56,7 +65,7 @@ export function Button({
         minWidth: moderateScale(44),
         borderRadius: 9999,
         borderWidth: isSecondary ? 1 : 0,
-        borderColor: '#E2E8F0',
+        borderColor: colors.border,
         backgroundColor: bg,
         opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
         flexDirection: 'row',

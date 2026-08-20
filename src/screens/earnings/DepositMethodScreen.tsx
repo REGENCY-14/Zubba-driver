@@ -7,11 +7,12 @@ import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { depositMethods } from '../../constants/paymentMethods';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 export function DepositMethodScreen({ navigation }: RootStackScreenProps<'DepositMethod'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const scrollBottomPadding = useScrollBottomPadding();
 
   return (
@@ -60,7 +61,7 @@ export function DepositMethodScreen({ navigation }: RootStackScreenProps<'Deposi
                 width: moderateScale(40),
                 height: moderateScale(40),
                 borderRadius: moderateScale(20),
-                backgroundColor: `${COLORS.brandGreen}1A`,
+                backgroundColor: isDark ? SHARED_DARK.brandTintBg : `${COLORS.brandGreen}1A`,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}

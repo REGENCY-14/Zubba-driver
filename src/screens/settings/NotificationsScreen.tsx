@@ -8,6 +8,7 @@ import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { notificationService } from '../../api/notificationService';
 import { handleApiError } from '../../utils/handleApiError';
 import type { Notification, NotificationPreferences } from '../../types/notification.types';
@@ -29,7 +30,7 @@ const DELIVERY_METHODS: { key: keyof NotificationPreferences; label: string }[] 
 ];
 
 export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifications'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const scrollBottomPadding = useScrollBottomPadding();
@@ -113,7 +114,7 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
                   width: moderateScale(36),
                   height: moderateScale(36),
                   borderRadius: moderateScale(18),
-                  backgroundColor: `${COLORS.brandGreen}1A`,
+                  backgroundColor: isDark ? SHARED_DARK.brandTintBg : `${COLORS.brandGreen}1A`,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}

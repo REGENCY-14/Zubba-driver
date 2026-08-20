@@ -10,6 +10,7 @@ import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { driverService } from '../../api/driverService';
 import { toJob, Job, JobStatus } from '../../utils/jobMapping';
 import { callCustomer, messageCustomer } from '../../utils/contactCustomer';
@@ -48,7 +49,7 @@ const NEXT_STATUS: Partial<Record<JobStatus, JobStatus>> = {
 
 export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'JobDetail'>) {
   const { jobId } = route.params;
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(false);
   const scrollBottomPadding = useScrollBottomPadding();
@@ -128,7 +129,7 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
                 width: moderateScale(44),
                 height: moderateScale(44),
                 borderRadius: moderateScale(22),
-                backgroundColor: `${COLORS.brandGreen}1A`,
+                backgroundColor: isDark ? SHARED_DARK.brandTintBg : `${COLORS.brandGreen}1A`,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}

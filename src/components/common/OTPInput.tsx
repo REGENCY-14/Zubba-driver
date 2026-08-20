@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { TextInput, View } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
+import { COLORS } from '../../constants/colors';
 import { moderateScale } from '../../utils/scale';
 
 // Ported from the customer app's src/components/common/OTPInput.tsx
@@ -71,7 +72,10 @@ export function OTPInput({ value, onChange, length = 4, onComplete }: OTPInputPr
             fontFamily: 'Poppins_600SemiBold',
             color: colors.text,
             backgroundColor: value[i] ? colors.card : colors.surface,
-            borderColor: value[i] ? '#34A853' : colors.border,
+            // Solid accent for the filled-digit border — same in both themes,
+          // like the guide's example of a small element that shouldn't be
+          // translucent. Uses the app's own brand green, not a foreign hex.
+          borderColor: value[i] ? COLORS.brandGreen : colors.border,
           }}
         />
       ))}
