@@ -9,6 +9,8 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
+import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { submitKyc as submitKycAction } from '../../slices/driverProfile/driverProfileSlice';
 import { updateUser } from '../../slices/auth/authSlice';
 import { saveAuthUser } from '../../utils/authStorage';
@@ -25,7 +27,8 @@ const VEHICLE_TYPES: { key: VehicleType; label: string }[] = [
 ];
 
 export function KycScreen({ navigation }: RootStackScreenProps<'Kyc'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
   const kyc = useSelector((state: RootState) => state.driverProfile.kyc);
@@ -140,9 +143,9 @@ export function KycScreen({ navigation }: RootStackScreenProps<'Kyc'>) {
                   minHeight: moderateScale(44),
                   justifyContent: 'center',
                   borderRadius: 9999,
-                  backgroundColor: active ? '#31973D' : colors.surface,
+                  backgroundColor: active ? activeGreen : colors.surface,
                   borderWidth: 1,
-                  borderColor: active ? '#31973D' : colors.border,
+                  borderColor: active ? activeGreen : colors.border,
                 }}
               >
                 <Text

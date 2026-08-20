@@ -7,10 +7,11 @@ import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 export function AboutUsScreen({ navigation }: RootStackScreenProps<'AboutUs'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const scrollBottomPadding = useScrollBottomPadding();
 
   return (
@@ -28,7 +29,7 @@ export function AboutUsScreen({ navigation }: RootStackScreenProps<'AboutUs'>) {
             width: moderateScale(72),
             height: moderateScale(72),
             borderRadius: moderateScale(18),
-            backgroundColor: COLORS.brandGreen,
+            backgroundColor: isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen,
             alignItems: 'center',
             justifyContent: 'center',
           }}

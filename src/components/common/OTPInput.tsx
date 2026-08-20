@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { TextInput, View } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { moderateScale } from '../../utils/scale';
 
 // Ported from the customer app's src/components/common/OTPInput.tsx
@@ -15,7 +16,7 @@ export type OTPInputProps = {
 };
 
 export function OTPInput({ value, onChange, length = 4, onComplete }: OTPInputProps) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const inputRefs = useRef<Array<TextInput | null>>([]);
 
   const handleChangeText = (text: string, index: number) => {
@@ -72,10 +73,11 @@ export function OTPInput({ value, onChange, length = 4, onComplete }: OTPInputPr
             fontFamily: 'Poppins_600SemiBold',
             color: colors.text,
             backgroundColor: value[i] ? colors.card : colors.surface,
-            // Solid accent for the filled-digit border — same in both themes,
-          // like the guide's example of a small element that shouldn't be
-          // translucent. Uses the app's own brand green, not a foreign hex.
-          borderColor: value[i] ? COLORS.brandGreen : colors.border,
+            // Solid accent for the filled-digit border — a "filled indicator"
+            // per SHARED_DARK.accentGreen's own role, so it brightens in dark
+            // mode like every other filled/solid green element in the app
+            // rather than rendering the same muted brand green in both themes.
+            borderColor: value[i] ? (isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen) : colors.border,
           }}
         />
       ))}

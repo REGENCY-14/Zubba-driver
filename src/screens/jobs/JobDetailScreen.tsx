@@ -134,7 +134,11 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
                 justifyContent: 'center',
               }}
             >
-              <MaterialCommunityIcons name="map-marker-path" size={moderateScale(22)} color={COLORS.brandGreen} />
+              <MaterialCommunityIcons
+                name="map-marker-path"
+                size={moderateScale(22)}
+                color={isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen}
+              />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(14), color: colors.text }}>
@@ -175,7 +179,13 @@ export function JobDetailScreen({ navigation, route }: RootStackScreenProps<'Job
             <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(11), color: colors.textMuted }}>
               Est. pay
             </Text>
-            <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(14), color: COLORS.brandGreen }}>
+            <Text
+              style={{
+                fontFamily: 'Poppins_700Bold',
+                fontSize: moderateScale(14),
+                color: isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen,
+              }}
+            >
               GHS {(job.amountEarned ?? job.estimatedPay).toFixed(2)}
             </Text>
           </View>

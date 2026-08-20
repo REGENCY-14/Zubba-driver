@@ -12,6 +12,7 @@ import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { driverService } from '../../api/driverService';
 import { walletService } from '../../api/walletService';
 import { toJob, Job } from '../../utils/jobMapping';
@@ -39,7 +40,8 @@ function isWithinPeriod(dateIso: string, period: EarningsPeriod): boolean {
 }
 
 export function EarningsScreen({ navigation, route }: RootStackScreenProps<'Earnings'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
   const dispatch = useDispatch();
   const [period, setPeriod] = useState<EarningsPeriod>('week');
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -135,9 +137,9 @@ export function EarningsScreen({ navigation, route }: RootStackScreenProps<'Earn
                   justifyContent: 'center',
                   alignItems: 'center',
                   borderRadius: moderateScale(12),
-                  backgroundColor: active ? COLORS.brandGreen : colors.surface,
+                  backgroundColor: active ? activeGreen : colors.surface,
                   borderWidth: 1,
-                  borderColor: active ? COLORS.brandGreen : colors.border,
+                  borderColor: active ? activeGreen : colors.border,
                 }}
               >
                 <Text
@@ -165,7 +167,7 @@ export function EarningsScreen({ navigation, route }: RootStackScreenProps<'Earn
                 <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(11), color: colors.textMuted }}>
                   Earned
                 </Text>
-                <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(20), color: COLORS.brandGreen }}>
+                <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(20), color: activeGreen }}>
                   GHS {totalGHS.toFixed(2)}
                 </Text>
               </View>
@@ -225,7 +227,7 @@ export function EarningsScreen({ navigation, route }: RootStackScreenProps<'Earn
                   • {job.bags ?? 0} bag{job.bags !== 1 ? 's' : ''}
                 </Text>
               </View>
-              <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(14), color: COLORS.brandGreen }}>
+              <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(14), color: activeGreen }}>
                 + GHS {(job.amountEarned ?? 0).toFixed(2)}
               </Text>
             </View>

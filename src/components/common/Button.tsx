@@ -50,7 +50,9 @@ export function Button({
     : isPrimary
     ? '#FFFFFF'
     : isGhost
-    ? COLORS.brandGreen
+    ? isDark
+      ? SHARED_DARK.accentGreen
+      : COLORS.brandGreen
     : colors.text;
 
   return (

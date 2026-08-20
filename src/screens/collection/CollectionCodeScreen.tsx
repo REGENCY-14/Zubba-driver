@@ -11,6 +11,7 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { driverService } from '../../api/driverService';
 import { toJob, Job } from '../../utils/jobMapping';
 import { handleApiError } from '../../utils/handleApiError';
@@ -38,7 +39,9 @@ const POLL_INTERVAL_MS = 4000;
 // the code is spoofable in the request payload.
 export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps<'CollectionCode'>) {
   const { jobId } = route.params;
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
+  const errorText = isDark ? SHARED_DARK.destructiveText : COLORS.destructiveRed;
   const insets = useSafeAreaInsets();
 
   const [job, setJob] = useState<Job | null>(null);
@@ -166,7 +169,7 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
             gap: moderateScale(16),
           }}
         >
-        <MaterialCommunityIcons name="check-decagram" size={moderateScale(64)} color={COLORS.brandGreen} />
+        <MaterialCommunityIcons name="check-decagram" size={moderateScale(64)} color={activeGreen} />
         <Text
           style={{
             fontFamily: 'Poppins_700Bold',
@@ -187,7 +190,7 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
         >
           {result.bags} bag{result.bags !== 1 ? 's' : ''} logged
         </Text>
-        <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(24), color: COLORS.brandGreen }}>
+        <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(24), color: activeGreen }}>
           + GHS {result.amountEarned.toFixed(2)}
         </Text>
         <Button
@@ -217,7 +220,7 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
           <MaterialCommunityIcons
             name={isPaid ? 'cash-check' : 'clock-outline'}
             size={moderateScale(64)}
-            color={isPaid ? COLORS.brandGreen : colors.textSub}
+            color={isPaid ? activeGreen : colors.textSub}
           />
           <Text
             style={{
@@ -315,7 +318,7 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
                 width: moderateScale(44),
                 height: moderateScale(44),
                 borderRadius: moderateScale(22),
-                backgroundColor: COLORS.brandGreen,
+                backgroundColor: activeGreen,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -347,7 +350,7 @@ export function CollectionCodeScreen({ navigation, route }: RootStackScreenProps
         <OTPInput value={digits} onChange={setDigits} length={4} onComplete={handleCodeComplete} />
 
         {codeError ? (
-          <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: '#EF4444' }}>
+          <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: errorText }}>
             {codeError}
           </Text>
         ) : null}

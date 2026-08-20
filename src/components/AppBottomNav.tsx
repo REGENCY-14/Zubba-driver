@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { scale, moderateScale } from '../utils/scale';
 import { useBottomNavOffset } from '../utils/screenInsets';
+import { SHARED_DARK } from '../constants/darkTheme';
 
 export type DriverTab = 'home' | 'jobs' | 'earnings' | 'settings';
 
@@ -35,11 +36,13 @@ function NavItem({
   active,
   onPress,
   textSub,
+  activePillBg,
 }: {
   tab: TabDef;
   active: boolean;
   onPress: () => void;
   textSub: string;
+  activePillBg: string;
 }) {
   const scaleValue = useSharedValue(1);
 
@@ -68,7 +71,7 @@ function NavItem({
           gap: moderateScale(6),
           minWidth: moderateScale(44),
           minHeight: moderateScale(44),
-          backgroundColor: active ? '#31973D' : 'transparent',
+          backgroundColor: active ? activePillBg : 'transparent',
         }}
       >
         <View
@@ -96,8 +99,12 @@ function NavItem({
 }
 
 export function AppBottomNav({ activeTab, navigation }: Props) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const bottomOffset = useBottomNavOffset();
+  // Matches the customer app's APP_DARK.navActivePillBg — the active tab
+  // pill goes translucent in dark mode instead of the solid brand green,
+  // same CTA treatment as every other primary-filled element in the app.
+  const activePillBg = isDark ? SHARED_DARK.navActivePillBg : '#31973D';
 
   return (
     <View
@@ -137,6 +144,7 @@ export function AppBottomNav({ activeTab, navigation }: Props) {
             active={activeTab === tab.key}
             onPress={() => navigation.navigate(tab.route)}
             textSub={colors.textSub}
+            activePillBg={activePillBg}
           />
         ))}
       </View>

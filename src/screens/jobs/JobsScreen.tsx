@@ -11,6 +11,7 @@ import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { driverService } from '../../api/driverService';
 import { toJob, Job, JobStatus } from '../../utils/jobMapping';
 import { toggleSidebar } from '../../slices/ui/uiSlice';
@@ -50,7 +51,8 @@ function statusPillKind(status: JobStatus): StatusKind {
 }
 
 export function JobsScreen({ navigation }: RootStackScreenProps<'Jobs'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
   const dispatch = useDispatch();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -115,9 +117,9 @@ export function JobsScreen({ navigation }: RootStackScreenProps<'Jobs'>) {
                 justifyContent: 'center',
                 alignItems: 'center',
                 borderRadius: moderateScale(18),
-                backgroundColor: active ? COLORS.brandGreen : colors.surface,
+                backgroundColor: active ? activeGreen : colors.surface,
                 borderWidth: 1,
-                borderColor: active ? COLORS.brandGreen : colors.border,
+                borderColor: active ? activeGreen : colors.border,
               }}
             >
               <Text

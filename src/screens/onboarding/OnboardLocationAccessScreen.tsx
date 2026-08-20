@@ -43,7 +43,11 @@ export function OnboardLocationAccessScreen({
             justifyContent: 'center',
           }}
         >
-          <MaterialCommunityIcons name="map-marker-radius-outline" size={moderateScale(44)} color={COLORS.brandGreen} />
+          <MaterialCommunityIcons
+            name="map-marker-radius-outline"
+            size={moderateScale(44)}
+            color={isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen}
+          />
         </View>
         <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(22), color: colors.text, textAlign: 'center' }}>
           Allow location access

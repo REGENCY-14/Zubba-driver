@@ -12,6 +12,7 @@ import { useCurrentLocation } from '../../hooks/useCurrentLocation';
 import { useRoutePolyline } from '../../hooks/useRoutePolyline';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { driverService } from '../../api/driverService';
 import { toJob, Job } from '../../utils/jobMapping';
 import { callCustomer, messageCustomer } from '../../utils/contactCustomer';
@@ -20,7 +21,7 @@ import type { RootStackScreenProps } from '../../navigation/types';
 
 export function RouteMapScreen({ navigation, route }: RootStackScreenProps<'RouteMap'>) {
   const { jobId } = route.params;
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const [job, setJob] = useState<Job | null>(null);
   const { coords: driverCoords } = useCurrentLocation({ watch: true });
   const driverCoordsRef = useRef(driverCoords);
@@ -87,7 +88,13 @@ export function RouteMapScreen({ navigation, route }: RootStackScreenProps<'Rout
               </Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(14), color: COLORS.brandGreen }}>
+              <Text
+                style={{
+                  fontFamily: 'Poppins_700Bold',
+                  fontSize: moderateScale(14),
+                  color: isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen,
+                }}
+              >
                 {distanceLabel}
               </Text>
               <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(11), color: colors.textSub }}>

@@ -6,6 +6,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 
 // 20s response countdown — auto-declines at zero, same as a real dispatch
 // timeout would.
@@ -27,7 +28,9 @@ interface IncomingRequestModalProps {
 }
 
 export function IncomingRequestModal({ request, onRespond }: IncomingRequestModalProps) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
+  const urgentRed = isDark ? SHARED_DARK.statusFailedText : '#FF383C';
   const insets = useSafeAreaInsets();
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
 
@@ -74,7 +77,7 @@ export function IncomingRequestModal({ request, onRespond }: IncomingRequestModa
                 height: moderateScale(36),
                 borderRadius: moderateScale(18),
                 borderWidth: 2,
-                borderColor: urgent ? '#FF383C' : COLORS.brandGreen,
+                borderColor: urgent ? urgentRed : activeGreen,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -83,7 +86,7 @@ export function IncomingRequestModal({ request, onRespond }: IncomingRequestModa
                 style={{
                   fontFamily: 'Poppins_700Bold',
                   fontSize: moderateScale(13),
-                  color: urgent ? '#FF383C' : COLORS.brandGreen,
+                  color: urgent ? urgentRed : activeGreen,
                 }}
               >
                 {secondsLeft}
@@ -127,7 +130,7 @@ export function IncomingRequestModal({ request, onRespond }: IncomingRequestModa
                 <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(11), color: colors.textMuted }}>
                   Est. pay
                 </Text>
-                <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(14), color: COLORS.brandGreen }}>
+                <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(14), color: activeGreen }}>
                   GHS {request.estimatedPay.toFixed(2)}
                 </Text>
               </View>

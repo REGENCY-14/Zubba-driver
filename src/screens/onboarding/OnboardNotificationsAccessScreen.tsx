@@ -52,7 +52,11 @@ export function OnboardNotificationsAccessScreen({
             justifyContent: 'center',
           }}
         >
-          <MaterialCommunityIcons name="bell-ring-outline" size={moderateScale(44)} color={COLORS.brandGreen} />
+          <MaterialCommunityIcons
+            name="bell-ring-outline"
+            size={moderateScale(44)}
+            color={isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen}
+          />
         </View>
         <Text style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(22), color: colors.text, textAlign: 'center' }}>
           Stay on top of job requests

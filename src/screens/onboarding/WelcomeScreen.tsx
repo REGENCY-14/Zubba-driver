@@ -3,10 +3,12 @@ import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
 
   return (
     <ScreenShell>
@@ -23,7 +25,7 @@ export function WelcomeScreen({ navigation }: RootStackScreenProps<'Welcome'>) {
             width: moderateScale(96),
             height: moderateScale(96),
             borderRadius: moderateScale(24),
-            backgroundColor: '#31973D',
+            backgroundColor: isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen,
             alignItems: 'center',
             justifyContent: 'center',
           }}

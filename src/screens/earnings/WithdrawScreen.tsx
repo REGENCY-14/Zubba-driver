@@ -10,6 +10,7 @@ import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { walletService } from '../../api/walletService';
 import type { RootStackScreenProps } from '../../navigation/types';
 
@@ -25,7 +26,11 @@ const PAYOUT_METHODS: { key: PayoutRail; label: string }[] = [
 ];
 
 export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
+  // COLORS.selectedRing and COLORS.brandGreen are the same hex — one shared
+  // dark-mode accent covers both roles.
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
+  const errorText = isDark ? SHARED_DARK.destructiveText : COLORS.destructiveRed;
   const [balance, setBalance] = useState<number | null>(null);
   const [amount, setAmount] = useState('');
   const [rail, setRail] = useState<PayoutRail>('mtn');
@@ -81,7 +86,7 @@ export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>)
             gap: moderateScale(16),
           }}
         >
-        <MaterialCommunityIcons name="clock-check-outline" size={moderateScale(64)} color={COLORS.brandGreen} />
+        <MaterialCommunityIcons name="clock-check-outline" size={moderateScale(64)} color={activeGreen} />
         <Text
           style={{
             fontFamily: 'Poppins_700Bold',
@@ -153,7 +158,7 @@ export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>)
                 padding: moderateScale(10),
                 borderRadius: moderateScale(16),
                 borderWidth: selected ? 2 : 1,
-                borderColor: selected ? COLORS.selectedRing : colors.border,
+                borderColor: selected ? activeGreen : colors.border,
                 minHeight: moderateScale(44),
               }}
             >
@@ -162,7 +167,7 @@ export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>)
                 {method.label}
               </Text>
               {selected && (
-                <MaterialCommunityIcons name="check-circle" size={moderateScale(20)} color={COLORS.selectedRing} />
+                <MaterialCommunityIcons name="check-circle" size={moderateScale(20)} color={activeGreen} />
               )}
             </Pressable>
           );
@@ -178,7 +183,7 @@ export function WithdrawScreen({ navigation }: RootStackScreenProps<'Withdraw'>)
       />
 
       {error ? (
-        <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: '#EF4444' }}>
+        <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: errorText }}>
           {error}
         </Text>
       ) : null}

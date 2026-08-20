@@ -16,11 +16,14 @@ import { uploadKycDocument } from '../../services/kycUploadService';
 import { saveAuthUser } from '../../utils/authStorage';
 import { handleApiError } from '../../utils/handleApiError';
 import { DRIVER_TERMS_TEXT } from '../../constants/legalText';
+import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import type { RootState } from '../../store';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 export function TermsScreen({ navigation }: RootStackScreenProps<'Terms'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
   const dispatch = useDispatch();
   const kyc = useSelector((state: RootState) => state.driverProfile.kyc);
   const user = useSelector((state: RootState) => state.auth.user);
@@ -104,8 +107,8 @@ export function TermsScreen({ navigation }: RootStackScreenProps<'Terms'>) {
             height: moderateScale(22),
             borderRadius: moderateScale(6),
             borderWidth: 1.5,
-            borderColor: agreed ? '#31973D' : colors.border,
-            backgroundColor: agreed ? '#31973D' : 'transparent',
+            borderColor: agreed ? activeGreen : colors.border,
+            backgroundColor: agreed ? activeGreen : 'transparent',
             alignItems: 'center',
             justifyContent: 'center',
           }}

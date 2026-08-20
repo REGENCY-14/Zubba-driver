@@ -7,6 +7,8 @@ import { OTPInput } from '../../components/common/OTPInput';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { authService } from '../../api/authService';
 import { setCredentials } from '../../slices/auth/authSlice';
 import { saveAuthTokens, saveAuthUser } from '../../utils/authStorage';
@@ -16,7 +18,7 @@ import type { RootStackScreenProps } from '../../navigation/types';
 
 export function VerifyOtpScreen({ navigation, route }: RootStackScreenProps<'VerifyOtp'>) {
   const { phone } = route.params;
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const dispatch = useDispatch();
 
   const [digits, setDigits] = useState<string[]>(['', '', '', '']);
@@ -85,7 +87,13 @@ export function VerifyOtpScreen({ navigation, route }: RootStackScreenProps<'Ver
         <OTPInput value={digits} onChange={setDigits} length={4} onComplete={handleComplete} />
 
         {error ? (
-          <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: '#EF4444' }}>
+          <Text
+            style={{
+              fontFamily: 'Poppins_400Regular',
+              fontSize: moderateScale(12),
+              color: isDark ? SHARED_DARK.statusFailedText : COLORS.destructiveRed,
+            }}
+          >
             {error}
           </Text>
         ) : null}

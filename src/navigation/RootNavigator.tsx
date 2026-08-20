@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { RootStackParamList } from './types';
+import { useTheme } from '../context/ThemeContext';
 import { SplashScreen } from '../screens/onboarding/SplashScreen';
 import { OnboardLocationAccessScreen } from '../screens/onboarding/OnboardLocationAccessScreen';
 import { OnboardNotificationsAccessScreen } from '../screens/onboarding/OnboardNotificationsAccessScreen';
@@ -35,8 +36,16 @@ import { AboutUsScreen } from '../screens/settings/AboutUsScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
+  const { colors } = useTheme();
+
   return (
-    <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      initialRouteName="Splash"
+      // contentStyle keeps the transitioning-screen background themed —
+      // without it, native-stack's default (light) background flashes
+      // behind the incoming/outgoing screen during a push/pop in dark mode.
+      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}
+    >
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="OnboardLocationAccess" component={OnboardLocationAccessScreen} />
       <Stack.Screen name="OnboardNotificationsAccess" component={OnboardNotificationsAccessScreen} />

@@ -8,6 +8,7 @@ import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { submitIssueReport, IssueCategory } from '../../services/mock/supportMock';
 import type { RootStackScreenProps } from '../../navigation/types';
 
@@ -20,7 +21,8 @@ const CATEGORIES: { key: IssueCategory; label: string }[] = [
 ];
 
 export function ReportIssueScreen({ navigation }: RootStackScreenProps<'ReportIssue'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
   const [category, setCategory] = useState<IssueCategory>('app_bug');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -45,7 +47,7 @@ export function ReportIssueScreen({ navigation }: RootStackScreenProps<'ReportIs
             gap: moderateScale(16),
           }}
         >
-        <MaterialCommunityIcons name="check-decagram" size={moderateScale(56)} color={COLORS.brandGreen} />
+        <MaterialCommunityIcons name="check-decagram" size={moderateScale(56)} color={activeGreen} />
         <Text
           style={{
             fontFamily: 'Poppins_700Bold',
@@ -98,9 +100,9 @@ export function ReportIssueScreen({ navigation }: RootStackScreenProps<'ReportIs
                   minHeight: moderateScale(44),
                   justifyContent: 'center',
                   borderRadius: 9999,
-                  backgroundColor: active ? COLORS.brandGreen : colors.surface,
+                  backgroundColor: active ? activeGreen : colors.surface,
                   borderWidth: 1,
-                  borderColor: active ? COLORS.brandGreen : colors.border,
+                  borderColor: active ? activeGreen : colors.border,
                 }}
               >
                 <Text

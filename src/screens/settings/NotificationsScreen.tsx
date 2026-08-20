@@ -31,6 +31,7 @@ const DELIVERY_METHODS: { key: keyof NotificationPreferences; label: string }[] 
 
 export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifications'>) {
   const { isDark, colors } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const scrollBottomPadding = useScrollBottomPadding();
@@ -88,7 +89,7 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
               <Switch
                 value={preferences ? Boolean(preferences[method.key]) : false}
                 onValueChange={(value) => handleToggle(method.key, value)}
-                trackColor={{ false: colors.border, true: COLORS.brandGreen }}
+                trackColor={{ false: colors.border, true: activeGreen }}
                 thumbColor="#FFFFFF"
                 disabled={!preferences}
                 accessibilityLabel={`Toggle ${method.label}`}
@@ -122,7 +123,7 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
                 <MaterialCommunityIcons
                   name={TYPE_ICON[n.type] ?? 'bell-outline'}
                   size={moderateScale(18)}
-                  color={COLORS.brandGreen}
+                  color={activeGreen}
                 />
               </View>
               <View style={{ flex: 1, gap: moderateScale(2) }}>
@@ -138,7 +139,7 @@ export function NotificationsScreen({ navigation }: RootStackScreenProps<'Notifi
                         paddingHorizontal: moderateScale(7),
                         paddingVertical: moderateScale(2),
                         borderRadius: 9999,
-                        backgroundColor: COLORS.brandGreen,
+                        backgroundColor: activeGreen,
                       }}
                     >
                       <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(9), color: '#FFFFFF' }}>

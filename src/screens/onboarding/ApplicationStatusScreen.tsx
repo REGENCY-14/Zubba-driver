@@ -4,13 +4,15 @@ import { useTheme } from '../../context/ThemeContext';
 import { Button } from '../../components/common/Button';
 import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
+import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import type { RootStackScreenProps } from '../../navigation/types';
 
 // The backend has no driver KYC review pipeline — registering with role="driver"
 // and submitting the Terms screen activates the driver row immediately, so this
 // is always a confirmation, never a pending/rejected wait state.
 export function ApplicationStatusScreen({ navigation }: RootStackScreenProps<'ApplicationStatus'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
 
   return (
     <ScreenShell>
@@ -23,7 +25,11 @@ export function ApplicationStatusScreen({ navigation }: RootStackScreenProps<'Ap
           gap: moderateScale(16),
         }}
       >
-      <MaterialCommunityIcons name="check-decagram" size={moderateScale(64)} color="#31973D" />
+      <MaterialCommunityIcons
+        name="check-decagram"
+        size={moderateScale(64)}
+        color={isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen}
+      />
       <Text
         style={{
           fontFamily: 'Poppins_700Bold',

@@ -35,16 +35,16 @@ const LIGHT: ThemeColors = {
 };
 
 const DARK: ThemeColors = {
-  bg: '#0F1621',
-  surface: '#141D2B',
-  card: '#1A2438',
-  border: '#53617C',
-  borderLight: '#374258',
-  text: '#F1F5F9',
-  textSub: '#94A3B8',
-  textMuted: '#64748A',
-  iconBg: '#1E2D40',
-  iconColor: '#CBD5E1',
+  bg: '#0D0D0D',
+  surface: '#141519',
+  card: '#1B1D22',
+  border: '#18212E',
+  borderLight: '#233044',
+  text: '#CCD7E0',
+  textSub: '#64748A',
+  textMuted: '#6F7A6C',
+  iconBg: '#121212',
+  iconColor: '#CCD7E0',
 };
 
 type ThemeContextType = {

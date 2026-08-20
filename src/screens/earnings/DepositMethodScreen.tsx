@@ -69,7 +69,7 @@ export function DepositMethodScreen({ navigation }: RootStackScreenProps<'Deposi
               <MaterialCommunityIcons
                 name={method.iconName}
                 size={moderateScale(20)}
-                color={COLORS.brandGreen}
+                color={isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen}
               />
             </View>
             <Text

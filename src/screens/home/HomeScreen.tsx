@@ -10,6 +10,7 @@ import { ScreenShell } from '../../components/common/ScreenShell';
 import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
+import { SHARED_DARK } from '../../constants/darkTheme';
 import { toggleSidebar } from '../../slices/ui/uiSlice';
 import { driverService } from '../../api/driverService';
 import { handleApiError } from '../../utils/handleApiError';
@@ -42,7 +43,8 @@ function toIncomingJobRequest(request: DriverRequestItem): IncomingJobRequest {
 }
 
 export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
 
@@ -155,7 +157,7 @@ export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
               width: moderateScale(48),
               height: moderateScale(48),
               borderRadius: moderateScale(24),
-              backgroundColor: COLORS.brandGreen,
+              backgroundColor: activeGreen,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -173,7 +175,7 @@ export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
                 width: moderateScale(10),
                 height: moderateScale(10),
                 borderRadius: moderateScale(5),
-                backgroundColor: COLORS.brandGreen,
+                backgroundColor: activeGreen,
               }}
             />
             <View style={{ flex: 1 }}>
@@ -201,7 +203,7 @@ export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
           {earnings ? (
             <View>
               <Text
-                style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(22), color: COLORS.brandGreen }}
+                style={{ fontFamily: 'Poppins_700Bold', fontSize: moderateScale(22), color: activeGreen }}
               >
                 GHS {earnings.totalGHS.toFixed(2)}
               </Text>
@@ -218,7 +220,7 @@ export function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
 
         <Card>
           <View style={{ gap: moderateScale(12), alignItems: 'center' }}>
-            <MaterialCommunityIcons name="radar" size={moderateScale(36)} color={COLORS.brandGreen} />
+            <MaterialCommunityIcons name="radar" size={moderateScale(36)} color={activeGreen} />
             <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: moderateScale(14), color: colors.text }}>
               Waiting for job requests
             </Text>

@@ -25,6 +25,7 @@ export function CreditAccountScreen({
   route,
 }: RootStackScreenProps<'CreditAccount'>) {
   const { isDark, colors } = useTheme();
+  const activeGreen = isDark ? SHARED_DARK.accentGreen : COLORS.brandGreen;
   const user = useSelector((state: RootState) => state.auth.user);
   const { startDeposit, isLoading } = useWalletPaystackCheckout();
 
@@ -119,9 +120,9 @@ export function CreditAccountScreen({
                     paddingHorizontal: moderateScale(16),
                     paddingVertical: moderateScale(10),
                     borderRadius: moderateScale(999),
-                    backgroundColor: selected ? COLORS.brandGreen : colors.surface,
+                    backgroundColor: selected ? activeGreen : colors.surface,
                     borderWidth: 1,
-                    borderColor: selected ? COLORS.brandGreen : colors.border,
+                    borderColor: selected ? activeGreen : colors.border,
                   }}
                 >
                   <Text
@@ -149,7 +150,7 @@ export function CreditAccountScreen({
             backgroundColor: isDark ? SHARED_DARK.brandTintBg : `${COLORS.brandGreen}14`,
           }}
         >
-          <MaterialCommunityIcons name="shield-check-outline" size={moderateScale(18)} color={COLORS.brandGreen} />
+          <MaterialCommunityIcons name="shield-check-outline" size={moderateScale(18)} color={activeGreen} />
           <Text style={{ flex: 1, fontFamily: 'Poppins_400Regular', fontSize: moderateScale(12), color: colors.textSub }}>
             Payments are processed securely via Paystack.
           </Text>

@@ -14,6 +14,7 @@ import {
 } from './mapUtils';
 import { useOsmTiles } from '../../hooks/useRoutePolyline';
 import { AvatarMapMarker } from './AvatarMapMarker';
+import { SHARED_DARK } from '../../constants/darkTheme';
 
 const PIN_ANCHOR = { x: 0.5, y: 0.95 };
 
@@ -64,6 +65,10 @@ export function LiveMapView({
   driverName,
 }: Props) {
   const { isDark, colors } = useTheme();
+  // Brand green renders muddy against a darkened map/tile overlay — same
+  // brightened accent used for every other filled/solid green element.
+  const mapAccent = isDark ? SHARED_DARK.accentGreen : '#31973D';
+  const unselectedRing = isDark ? colors.border : '#1F2A33';
   const useOsm = useOsmTiles();
   const mapRef = useRef<MapView>(null);
   const pickup = pickupLocation ?? userLocation ?? null;
@@ -135,7 +140,7 @@ export function LiveMapView({
         // tiles load. Painting it with the app's own background instead
         // makes that cold-start invisible instead of reading as a "blink".
         loadingEnabled
-        loadingIndicatorColor="#31973D"
+        loadingIndicatorColor={mapAccent}
         loadingBackgroundColor={colors.bg}
       >
         {useOsm && (
@@ -151,7 +156,7 @@ export function LiveMapView({
         {routeCoordinates.length > 1 && (
           <Polyline
             coordinates={routeCoordinates}
-            strokeColor="#31973D"
+            strokeColor={mapAccent}
             strokeWidth={4}
           />
         )}
@@ -162,7 +167,7 @@ export function LiveMapView({
             anchor={PIN_ANCHOR}
             avatarUrl={pickupAvatarUrl}
             name={pickupName ?? 'Customer'}
-            ringColor="#31973D"
+            ringColor={mapAccent}
           />
         )}
 
@@ -175,7 +180,7 @@ export function LiveMapView({
             zIndex={marker.selected ? 10 : 1}
             avatarUrl={marker.avatarUrl}
             name={marker.name ?? 'DR'}
-            ringColor={marker.selected ? '#31973D' : '#1F2A33'}
+            ringColor={marker.selected ? mapAccent : unselectedRing}
             highlighted={marker.selected}
           />
         ))}
@@ -186,7 +191,7 @@ export function LiveMapView({
             anchor={PIN_ANCHOR}
             avatarUrl={driverAvatarUrl}
             name={driverName ?? 'You'}
-            ringColor="#31973D"
+            ringColor={mapAccent}
           />
         )}
       </MapView>
