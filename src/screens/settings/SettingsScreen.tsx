@@ -10,6 +10,7 @@ import { moderateScale } from '../../utils/scale';
 import { useScrollBottomPadding } from '../../utils/screenInsets';
 import { COLORS } from '../../constants/colors';
 import { logout } from '../../slices/auth/authSlice';
+import { logoutDevice } from '../../services/pushNotifications';
 import { clearStoredAuth } from '../../utils/authStorage';
 import { driverService } from '../../api/driverService';
 import { toggleSidebar } from '../../slices/ui/uiSlice';
@@ -34,6 +35,8 @@ export function SettingsScreen({ navigation }: RootStackScreenProps<'Settings'>)
   const handleLogout = async () => {
     // Drop availability before clearing the token so nearby matching stops.
     await driverService.updateMe({ is_available: false }).catch(() => {});
+    // Tell the backend while the session is still valid, before local auth is cleared.
+    await logoutDevice();
     await clearStoredAuth();
     dispatch(logout());
     navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });

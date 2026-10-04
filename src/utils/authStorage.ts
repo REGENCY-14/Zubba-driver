@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AuthTokens, User } from '../slices/auth/auth.types';
+import { deleteLocalPushToken } from '../services/pushToken';
 
 // Manual AsyncStorage persistence, matching the customer app's convention
 // (src/utils/authStorage.ts) rather than the unused redux-persist dependency
@@ -54,6 +55,8 @@ export async function loadStoredAuth(): Promise<{
   return { tokens, user: JSON.parse(userRaw) };
 }
 
+// Every sign-out path clears stored auth, so this is where the device stops receiving pushes.
 export async function clearStoredAuth() {
   await AsyncStorage.multiRemove([TOKENS_KEY, USER_KEY]);
+  await deleteLocalPushToken();
 }

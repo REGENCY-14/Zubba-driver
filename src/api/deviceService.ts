@@ -3,7 +3,7 @@ import { ApiResponse } from '../types/api.types';
 
 export const deviceService = {
   registerPushToken: async (payload: {
-    expoPushToken: string;
+    pushToken: string;
     platform?: string;
     deviceName?: string;
     appVersion?: string;

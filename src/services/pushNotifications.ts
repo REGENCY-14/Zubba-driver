@@ -1,13 +1,18 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import {
+  getMessaging,
+  onMessage,
+  onTokenRefresh,
+  setBackgroundMessageHandler,
+} from '@react-native-firebase/messaging';
 
+import { authService } from '../api/authService';
 import { deviceService } from '../api/deviceService';
 import { notificationService } from '../api/notificationService';
 import { store } from '../store';
-
-const REGISTERED_PUSH_TOKEN_KEY = '@zubba_driver/registeredExpoPushToken';
+import { getFcmToken, getRegisteredPushToken, saveRegisteredPushToken } from './pushToken';
 
 export const configureNotifications = () => {
   Notifications.setNotificationHandler({
@@ -28,6 +33,22 @@ const ensureAndroidChannel = async () => {
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
   });
+};
+
+const registerTokenWithBackend = async (token: string) => {
+  await deviceService.registerPushToken({
+    pushToken: token,
+    platform: Platform.OS,
+    deviceName: notificationService.getDeviceName(),
+    appVersion: Constants.expoConfig?.version,
+  });
+  await saveRegisteredPushToken(token);
+};
+
+// FCM requires a handler registered at module load, before the React tree mounts.
+// Notification payloads are displayed by the OS while backgrounded, so nothing to do here.
+export const registerBackgroundMessageHandler = () => {
+  setBackgroundMessageHandler(getMessaging(), async () => {});
 };
 
 // Pre-auth permission prompt used during onboarding — just asks for the OS
@@ -55,28 +76,65 @@ export const syncPushNotifications = async () => {
     }
     if (status !== 'granted') return null;
 
-    const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-    if (!projectId) return null;
-
     const accessToken = store.getState().auth.accessToken;
     if (!accessToken) return null;
 
-    const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
-    const token = tokenResponse.data;
+    const token = await getFcmToken();
 
-    const registeredToken = await AsyncStorage.getItem(REGISTERED_PUSH_TOKEN_KEY);
+    const registeredToken = await getRegisteredPushToken();
     if (token === registeredToken) return token;
 
-    await deviceService.registerPushToken({
-      expoPushToken: token,
-      platform: Platform.OS,
-      deviceName: notificationService.getDeviceName(),
-      appVersion: Constants.expoConfig?.version,
-    });
-    await AsyncStorage.setItem(REGISTERED_PUSH_TOKEN_KEY, token);
+    await registerTokenWithBackend(token);
     return token;
   } catch (error) {
     console.log('Push notification registration skipped:', error);
     return null;
+  }
+};
+
+export const setupNotificationListeners = () => {
+  const messaging = getMessaging();
+
+  const unsubscribeForeground = onMessage(messaging, async (message) => {
+    // Android does not show FCM notifications while the app is in the foreground,
+    // so present it locally. iOS presents it via the expo-notifications handler.
+    if (Platform.OS === 'android' && message.notification) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: message.notification.title,
+          body: message.notification.body,
+          data: message.data ?? {},
+        },
+        trigger: null,
+      });
+    }
+  });
+
+  const unsubscribeTokenRefresh = onTokenRefresh(messaging, (token) => {
+    if (!store.getState().auth.accessToken) return;
+    registerTokenWithBackend(token).catch((error) => {
+      console.log('Failed to register refreshed FCM token:', error);
+    });
+  });
+
+  return () => {
+    unsubscribeForeground();
+    unsubscribeTokenRefresh();
+  };
+};
+
+/**
+ * Logs this device out on the backend: drops its push token and revokes the
+ * session. Best effort — clearing stored auth also deletes the FCM token locally.
+ */
+export const logoutDevice = async () => {
+  const pushToken = await getRegisteredPushToken();
+  try {
+    await authService.logout({
+      pushToken: pushToken ?? undefined,
+      refreshToken: store.getState().auth.refreshToken ?? undefined,
+    });
+  } catch (error) {
+    console.log('Backend logout failed:', error);
   }
 };

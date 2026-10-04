@@ -10,6 +10,7 @@ import { moderateScale, scale } from '../utils/scale';
 import { COLORS } from '../constants/colors';
 import { closeSidebar } from '../slices/ui/uiSlice';
 import { logout } from '../slices/auth/authSlice';
+import { logoutDevice } from '../services/pushNotifications';
 import { clearStoredAuth } from '../utils/authStorage';
 import { driverService } from '../api/driverService';
 import type { RootState } from '../store';
@@ -78,6 +79,8 @@ export function AppSidebar({ navigationRef }: AppSidebarProps) {
   const handleLogout = async () => {
     dispatch(closeSidebar());
     await driverService.updateMe({ is_available: false }).catch(() => {});
+    // Tell the backend while the session is still valid, before local auth is cleared.
+    await logoutDevice();
     await clearStoredAuth();
     dispatch(logout());
     navigationRef.current?.reset({ index: 0, routes: [{ name: 'Welcome' }] });
